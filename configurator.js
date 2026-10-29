@@ -1,133 +1,416 @@
-/* MLT - Configurator utilaj (militarylasertech.com/info/configurator-utilaj) */
-// CONFIGURATOR 1/3 - DATE: utilaje laser si plasma, tabel putere kW/mm
-(function(){
-var WA="40730466920",MAIL="contact@militarylasertech.com";
-var MESE=["3000 x 1500 mm","4000 x 2000 mm","6000 x 2000 mm","6000 x 2500 mm"],MESEXL=MESE.concat(["Format mare 14000 x 3200 mm (la cerere)"]),COD={"3000 x 1500 mm":"31.5","4000 x 2000 mm":"42","6000 x 2000 mm":"62","6000 x 2500 mm":"62.5"};
-var MAT=["Oțel carbon","Inox","Aluminiu","Alamă / cupru"];
+/* MLT - Configurator utilaj vizual (militarylasertech.com/info/configurator-utilaj)
+   Inlocuieste configuratorul vechi (versiunea veche ramane in istoricul GitHub, @19be3aa).
+   Se incarca din MerchantPro > Scripturi custom, prin jsDelivr:
+   <script src="https://cdn.jsdelivr.net/gh/MilitaryLaserTech/mlt-site@COD/configurator.js"></script>
+   Pozele stau langa script, in folderul img/ din acelasi repo (aceeasi versiune @COD).
+   Configuratorul e izolat intr-un Shadow DOM, ca stilurile temei sa nu-l strice si invers. */
+(function () {
+// pagina din MerchantPro pe care apare configuratorul
+var PAGE = "configurator-utilaj";
+if (location.pathname.indexOf(PAGE) < 0 || window.MLT_VCFG) return;
+window.MLT_VCFG = 1;
+
+var SCRIPT = document.currentScript;
+var IMG = (SCRIPT && SCRIPT.src ? SCRIPT.src.replace(/[^\/]*$/, "") : "") + "img/";
+var WA = "40730466920", MAIL = "contact@militarylasertech.com";
+
+/* ================= DATE ================= */
+var FRAMES = {sheet_open:7, sheet_enclosed:6, sheet_exchange_open:6, sheet_exchange_enclosed:6, platetube:6, platetube_exchange:6,
+  tube_2:5, tube_3:5, hbeam:7, cabinet:5, brake:6, robot:2};
+var MESE = ["3000 x 1500 mm","4000 x 2000 mm","6000 x 2000 mm","6000 x 2500 mm"];
+var COD = {"3000 x 1500 mm":"31.5","4000 x 2000 mm":"42","6000 x 2000 mm":"62","6000 x 2500 mm":"62.5"};
+var MAT = ["Oțel carbon","Inox","Aluminiu","Alamă / cupru"];
 // grosime maxima (mm) taiata de fiecare putere laser (W) - din calculatorul kW/mm de pe site
-var PW={"Oțel carbon":{10:1000,14:1500,16:2000,20:3000,22:4000,25:6000,30:8000,40:12000,40.1:15000},"Inox":{4:1000,6:1500,8:2000,10:3000,12:4000,16:6000,30:8000,30.1:15000},"Aluminiu":{3:1000,4:2000,6:3000,8:4000,12:6000,25:8000,30:12000,30.1:15000},"Alamă / cupru":{2:1000,3:1500,4:2000,5:3000,6:4000,8:6000,12:8000,14:12000,14.1:15000}};
-var KW=["1 kW","1,5 kW","2 kW","3 kW","4 kW","6 kW","8 kW","12 kW","15 kW","20 kW","30 kW"];
-var VAR={k:"var",t:"Variantă constructivă",o:["Deschis (investiție minimă)","Protejat / blindat (cabină anti-radiații, video, masă dublă)"]};
-var MATS={k:"mat",t:"Ce material tai cel mai des?",o:MAT};
-var GROS={k:"gros",t:"Grosimea maximă pe care vrei s-o tai",g:1};
-var PUT={k:"kw",t:"Puterea sursei laser",p:1};
-var T=[
-{n:"Tăiere laser tablă",c:"rover",s:[VAR,{k:"masa",t:"Dimensiunea mesei de lucru",o:MESEXL},MATS,GROS,PUT,{k:"opt",t:"Opțiuni (poți alege mai multe)",m:1,o:["Masă dublă de schimb (hidraulică)","Încărcare / descărcare automată tablă","Cap laser autofocus Raytools / Precitec","Sistem video în cabină","Exhaustare 2 kW și filtrare fum"]}]},
-{n:"Tăiere laser țeavă și profile",c:"cannon",s:[{k:"var",t:"Variantă constructivă",o:["Deschis","Protejat cu încărcare automată (autoload)"]},{k:"dia",t:"Diametrul maxim al țevii / profilului",o:["Ø 160 mm","Ø 220 mm","Ø 240 mm","Ø 350 mm"]},{k:"lung",t:"Lungimea țevii",o:["6 m","9 m","12 m"]},{k:"prof",t:"Ce profile tai?",m:1,o:["Țeavă rotundă","Țeavă pătrată / rectangulară","Profil I / H","Profil U","Cornier (L)","Țeavă ovală / profil deschis"]},MATS,{k:"gros",t:"Grosimea maximă a peretelui",g:1},PUT,{k:"opt",t:"Opțiuni",m:1,o:["Încărcare automată","Descărcare și sortare automată","3 mandrine - tăiere fără rest","Mandrine pneumatice / electromagnetice","Import fișiere IGS + recunoaștere contur"]}]},
-{n:"Tăiere laser tablă + țeavă/profile",c:"cannonrover",s:[VAR,{k:"masa",t:"Dimensiunea mesei de lucru",o:MESE},{k:"dia",t:"Diametrul maxim al țevii",o:["Ø 160 mm","Ø 220 mm","Ø 230 mm"]},MATS,GROS,PUT,{k:"opt",t:"Opțiuni",m:1,o:["Masă dublă de schimb (hidraulică)","Suport țeavă 3 - 9 m","Cap laser autofocus Raytools / Precitec"]}]},
-{n:"Tăiere plasmă tablă",c:"tank",s:[{k:"masa",t:"Dimensiunea mesei de lucru",o:MESE},MATS,{k:"gros",t:"Grosimea maximă",o:["până la 10 mm","10 - 20 mm","20 - 35 mm"]},{k:"amp",t:"Sursa plasmă",o:["63 A","100 A","120 A","200 A","Nu știu - recomandați-mi"]},{k:"opt",t:"Opțiuni",m:1,o:["Exhaustare 2 kW și filtrare fum","Componente Honeywell / EMERSON / FUJI"]}]},
-{n:"Tăiere plasmă tablă + profile",c:"tankcanon",s:[{k:"masa",t:"Dimensiunea mesei de lucru",o:MESE},{k:"dia",t:"Diametrul maxim al țevii",o:["Ø 160 mm","Ø 220 mm","Altul - spuneți-ne"]},MATS,{k:"gros",t:"Grosimea maximă",o:["până la 10 mm","10 - 20 mm","20 - 35 mm"]},{k:"amp",t:"Sursa plasmă",o:["63 A","100 A","120 A","200 A","Nu știu - recomandați-mi"]}]}
+var PW = {"Oțel carbon":{10:1000,14:1500,16:2000,20:3000,22:4000,25:6000,30:8000,40:12000,40.1:15000},
+  "Inox":{4:1000,6:1500,8:2000,10:3000,12:4000,16:6000,30:8000,30.1:15000},
+  "Aluminiu":{3:1000,4:2000,6:3000,8:4000,12:6000,25:8000,30:12000,30.1:15000},
+  "Alamă / cupru":{2:1000,3:1500,4:2000,5:3000,6:4000,8:6000,12:8000,14:12000,14.1:15000}};
+var KW = ["1 kW","1,5 kW","2 kW","3 kW","4 kW","6 kW","8 kW","12 kW","15 kW","20 kW","30 kW"];
+var NUSTIU = "Nu știu - recomandați-mi";
+var CE = "CE (MD + LVD + EMC)";
+
+var EXTRA_LASER = ["Compresor de aer","Stabilizator de tensiune + protecție la suprasarcină","Transformator",
+  "Aer condiționat pentru dulapul electric","Software nesting profesional","Instalare + training la sediu"];
+var EXTRA_WELD = ["Alimentator sârmă (dublu)","Kit protecție laser (ochelari + ecran)","Compresor de aer",
+  "Stabilizator de tensiune + protecție la suprasarcină","Training operator"];
+
+function v(id, t, d, g, o) { o = o || {}; o.id = id; o.t = t; o.d = d; o.g = g; return o; }
+function step(k, t, o) { o = o || {}; o.k = k; o.t = t; return o; }
+var S_MAT = step("mat", "Ce material tai cel mai des?", {o: MAT});
+var S_TH = step("gros", "Grosimea maximă pe care vrei s-o tai", {laserTh: 1});
+var S_KW = step("kw", "Puterea sursei laser", {laserKw: 1});
+var S_MASA = step("masa", "Dimensiunea mesei de lucru", {o: MESE});
+var W_TH = step("gros", "Grosimea materialului", {o: ["0,5 - 2 mm","2 - 4 mm","4 - 6 mm","peste 6 mm (la cerere)"]});
+var W_KW = step("kw", "Puterea sursei", {o: ["1,5 kW","2 kW","3 kW",NUSTIU], rec: function (A) {
+  var g = A.gros || ""; return /^0,5/.test(g) ? "1,5 kW" : /^2 -/.test(g) ? "2 kW" : g ? "3 kW" : null; }});
+
+var T = [
+ {id:"sheet", n:"Tăiere laser tablă", d:"Tablă oțel, inox, aluminiu, alamă", g:"sheet_open", rover:1,
+  variants:[
+   v("open","Deschis","Investiție minimă, acces liber pe masă. Până la 6 kW","sheet_open",{specs:{"Viteză maximă":"80 m/min","Precizie repetabilă":"±0.02 mm"}}),
+   v("arm","Protejat / blindat (ARMORED)","Cabină anti-radiații, video, masă dublă de schimb. Peste 6 kW","sheet_exchange_enclosed",{tag:"TOP",
+     specs:{"Precizie poziționare":"±0.03 mm","Precizie repetabilă":"±0.02 mm","Accelerație":"până la 1.2 G","Masă":"Dublă, schimb automat"}})],
+  steps:[S_MASA, S_MAT, S_TH, S_KW, step("opt","Opțiuni",{multi:1, o:["Masă dublă de schimb (hidraulică)","Încărcare / descărcare automată tablă",
+   "Cap laser autofocus Raytools / Precitec","Sistem video în cabină","Exhaustare 2 kW și filtrare fum"].concat(EXTRA_LASER)})],
+  std:"Cap laser Raytools BT110 · Sursă Raycus · CNC Cypcut 8000S · Batiu sudat · Grindă din aluminiu profil",
+  model:function (A) { return (A.variant === "arm" ? "ARMORED " : "") + "ROVER MLT " + (COD[A.masa] || ""); },
+  link:function (A) { return A.variant === "arm" ? "armored-rover-mlt-cnc-laser-debitare-tabla-protejat-375" : "rover-mlt-cnc-laser-debitare-tabla-deschis-374"; }},
+ {id:"tube", n:"Tăiere laser țeavă și profile", d:"Țeavă rotundă, rectangulară, profile", g:"tube_3",
+  variants:[
+   v("open","Deschis","Încărcare manuală, cost redus","tube_2",{specs:{"Precizie poziționare":"±0.03 mm","Accelerație":"0.6–1.2 G"}}),
+   v("arm","Protejat cu încărcare automată (autoload)","Alimentare din pachet, 3 mandrine, rest de țeavă minim","tube_3",{tag:"TOP",
+     specs:{"Precizie poziționare":"±0.03 mm","Accelerație":"0.6–1.2 G","Încărcare":"Automată (autoload)"}})],
+  steps:[step("dia","Diametrul maxim al țevii / profilului",{o:["Ø 160 mm","Ø 220 mm","Ø 240 mm","Ø 350 mm"]}),
+   step("lung","Lungimea țevii",{o:["6 m","9 m","12 m"]}),
+   step("prof","Ce profile tai?",{multi:1, o:["Țeavă rotundă","Țeavă pătrată / rectangulară","Profil I / H","Profil U","Cornier (L)","Țeavă ovală / profil deschis"]}),
+   S_MAT, step("gros","Grosimea maximă a peretelui",{laserTh:1}), S_KW,
+   step("opt","Opțiuni",{multi:1, o:["Încărcare automată","Descărcare și sortare automată","Platformă de descărcare","3 mandrine - tăiere fără rest",
+    "Mandrine pneumatice / electromagnetice","Cap pentru teșire (bevel)","Import fișiere IGS + recunoaștere contur"].concat(EXTRA_LASER)})],
+  std:"Control EtherCAT cu urmărire · Mandrine pneumatice · Sursă Raycus",
+  model:function (A) { var d = (A.dia || "").replace(/\D/g, ""); return A.variant === "arm" ? "ARMORED AUTOMATIC CANNON MLT-P6-" + (d || "240") : "CANNON MLT-P6-" + d; },
+  link:function (A) { return A.variant === "arm" ? "armored-automatic-cannon-mlt-p6-cnc-laser-debitare-autoload-protejat-377" : "cannon-mlt-p6-cnc-debitare-laser-profile-deschis-376"; }},
+ {id:"platetube", n:"Tăiere laser tablă + țeavă/profile", d:"Un singur utilaj pentru ambele", g:"platetube", rover:1,
+  variants:[
+   v("open","Deschis","Masă de tablă + mandrină pentru țeavă. Până la 6 kW","platetube",{specs:{"Precizie repetabilă":"±0.02 mm"}}),
+   v("arm","Protejat / blindat (ARMORED)","Masă dublă de schimb, productivitate maximă. Peste 6 kW","platetube_exchange",{tag:"TOP",
+     specs:{"Precizie poziționare":"±0.03 mm","Masă":"Dublă, schimb automat"}})],
+  steps:[S_MASA, step("dia","Diametrul maxim al țevii",{o:["Ø 160 mm","Ø 220 mm","Ø 230 mm"]}), S_MAT, S_TH, S_KW,
+   step("opt","Opțiuni",{multi:1, o:["Masă dublă de schimb (hidraulică)","Suport țeavă 3 - 9 m","Cap laser autofocus Raytools / Precitec"].concat(EXTRA_LASER)})],
+  std:"Cap laser Raytools BT110 · Sursă Raycus · CNC Cypcut 8000S · Batiu sudat · Mandrină pneumatică",
+  model:function (A) { return (A.variant === "arm" ? "ARMORED " : "") + "CANNON ROVER MLT-P6-" + (COD[A.masa] || "") + " / " + (A.dia || "").replace(/\D/g, ""); },
+  link:function (A) { return A.variant === "arm" ? "armored-cannon-rover-mlt-p6-cnc-laser-debitare-tabla-si-profile-379" : "cannon-rover-mlt-p6-cnc-taiere-laser-tabla-si-profile-deschis-383"; }},
+ {id:"plasma", n:"Tăiere plasmă", d:"Tablă groasă, cost mic pe metru tăiat", g:"sheet_open",
+  variants:[
+   v("pl","Plasmă tablă (thermoTANK)","Masă de debitare pentru tablă","sheet_open",{specs:{"Viteză maximă":"15 000 mm/min","Amorsare arc":"Fără contact","Grosime tăiere":"6–35 mm"}}),
+   v("plt","Plasmă tablă + profile (thermoTHANK CANON)","Masă de tablă + rotitor pentru țeavă","platetube",{tag:"TOP",
+     specs:{"Viteză maximă":"15 000 mm/min","Amorsare arc":"Fără contact","Grosime tăiere":"6–35 mm"}})],
+  steps:[S_MASA, step("dia","Diametrul maxim al țevii",{only:"plt", o:["Ø 160 mm","Ø 220 mm","Altul - spuneți-ne"]}), S_MAT,
+   step("gros","Grosimea maximă",{o:["până la 10 mm","10 - 20 mm","20 - 35 mm"]}),
+   step("amp","Sursa plasmă",{o:["63 A","100 A","120 A","200 A",NUSTIU], rec:function (A) {
+     var g = A.gros || ""; return /^până/.test(g) ? "100 A" : /^10/.test(g) ? "120 A" : g ? "200 A" : null; }}),
+   step("opt","Opțiuni",{multi:1, o:["Exhaustare 2 kW și filtrare fum","Masă cu apă pentru fum și zgură","Componente Honeywell / EMERSON / FUJI",
+    "Compresor de aer","Stabilizator de tensiune + protecție la suprasarcină","Software nesting profesional","Instalare + training la sediu"]})],
+  model:function (A) { return (A.variant === "plt" ? "thermoTHANK CANON MLT " : "thermoTANK MLT ") + (COD[A.masa] || ""); },
+  link:function (A) { return A.variant === "plt" ? "thermothank-canon-plasma-tabla-profile-392" : "thermotank-plasma-mlt-391"; }},
+ {id:"weld", n:"Sudură / curățare laser", d:"4 în 1, sudură laser, curățare pulsată sau continuă", g:"cabinet",
+  variants:[
+   v("ccwp","4 SHOTS ML-CCWP (4 în 1)","Sudură, tăiere, curățare și curățare cu pulsație cu un singur aparat","cabinet",{tag:"TOP",
+     specs:{"Funcții":"Sudură, tăiere, curățare, curățare cu pulsație","Răcire":"Apă, chiller dublă temperatură","Sârmă":"0.6–2.0 mm","Pistol":"≤ 0.7 kg"}}),
+   v("mlw","MACHINE GUN ML-W (sudură laser)","Aparat dedicat de sudură, cordon curat, fără deformări","cabinet",{
+     specs:{"Viteză sudură":"≤ 120 mm/s","Răcire":"Apă","Sârmă":"0.6–2.0 mm","Cap":"Swing-weld (oscilant)"}}),
+   v("mlc","MACHINE GUN ML-C (curățare laser)","Rugină, vopsea, oxizi, ulei, fără chimicale","cabinet",{
+     specs:{"Contact":"Fără contact, fără chimicale","Viteză curățare":"până la 50 m²/h (continuă)","Pistol":"≤ 0.7 kg"}})],
+  steps:[
+   step("tip","Tip curățare",{only:"mlc", o:["Continuă - rugină, vopsea groasă, suprafețe mari","Pulsată - fină, fără să afecteze materialul",NUSTIU]}),
+   step("ce","Ce cureți?",{only:"mlc", multi:1, o:["Rugină","Vopsea","Ulei / grăsime","Oxizi după sudură","Matrițe / piese"]}),
+   step("mat","Ce sudezi?",{not:"mlc", multi:1, o:["Oțel carbon","Inox","Aluminiu"]}),
+   step("gros","Grosimea materialului",{not:"mlc", o:W_TH.o}),
+   step("kw","Puterea sursei",{o:W_KW.o, rec:W_KW.rec}),
+   step("opt","Opțiuni",{multi:1, o:EXTRA_WELD.concat(["Răcire cu aer (fără chiller)","Aspirație fum"])})],
+  std:"Cap swing-weld (oscilant) · Lentile cu schimb rapid · Chiller cu dublă temperatură",
+  model:function (A) { return A.variant === "ccwp" ? "4 SHOTS ML-CCWP" : A.variant === "mlc" ? "MACHINE GUN ML-C" : "MACHINE GUN ML-W"; },
+  link:function (A) { return A.variant === "ccwp" ? "4-shots-ml-ccwp-sudura-curatare-curatare-cu-pulsatie-taiere-laser-382"
+    : A.variant === "mlc" ? "machine-gun-ml-c-curatare-laser-381" : "machine-gun-ml-w-sudura-laser-380"; }},
+ {id:"robot", n:"Robot laser 6 axe", d:"Sudură sau tăiere 3D automată, pe portal", g:"robot",
+  variants:[
+   v("w","Robot sudură laser","Cordoane repetabile pe serie, fără operator la pistol","robot",{tag:"TOP"}),
+   v("c","Robot tăiere laser 3D","Piese 3D, ambutisate, forme neregulate, tăiere 360°","robot")],
+  steps:[step("mat","Ce material lucrezi?",{multi:1, o:["Oțel carbon","Inox","Aluminiu"]}), W_TH, W_KW,
+   step("opt","Opțiuni",{multi:1, o:["Urmărire cusătură fără contact","Coordonare mai multe stații","Alimentare automată sârmă",
+    "Poziționer rotativ pentru piese","Celulă de protecție cu senzori","Compresor de aer","Stabilizator de tensiune + protecție la suprasarcină","Programare + training la sediu"]})],
+  std:"Braț 6 axe pe portal · Rază braț 1.4–2.0 m · Precizie repetabilă ±0.1 mm · Programare offline din model 3D",
+  model:function () { return "MLT Laser Welding Robot 6 axe"; },
+  link:function () { return "mlt-laser-welding-robot-automatic-6-axis-387"; }},
+ {id:"brake", n:"Abkant bendIT", d:"Presă CNC de îndoit, 50–500 t", g:"brake",
+  variants:[
+   v("hyd","Compensare hidraulică (CNC)","Unghi constant pe toată lungimea","brake",{tag:"TOP",specs:{"Compensare săgeată":"Hidraulică, CNC"}}),
+   v("mech","Compensare mecanică","Robust, întreținere minimă","brake",{specs:{"Compensare săgeată":"Mecanică"}})],
+  steps:[step("lung","Lungime și forță",{brake:1}),
+   step("gros","Grosimea maximă a tablei",{o:["până la 3 mm","3 - 6 mm","6 - 10 mm","peste 10 mm"]}),
+   step("opt","Opțiuni",{multi:1, o:["Set matrițe și poansoane suplimentare","Brațe suport față","Protecție laser la poanson",
+    "Stabilizator de tensiune + protecție la suprasarcină","Instalare + training la sediu"]})],
+  model:function (A) { return "bendIT dbE it " + (!A.lung ? "…" : /^Altă/.test(A.lung) ? "(la cerere)" : A.lung.replace(/ m \/ /, "-").replace(" t", "")); },
+  link:function () { return "abkant-393"; }},
+ {id:"hbeam", n:"Format mare / H-beam 3D", d:"Grinzi H, profile mari, 7 axe. La cerere", g:"hbeam",
+  variants:[v("h7","3D 7 axe","Teșire și tăiere 3D pe grinzi H, U, I","hbeam",{specs:{"Viteză tăiere":"80 m/min","Precizie poziționare":"±0.15 mm","Grosime":"0–50 mm"}})],
+  steps:[step("masa","Dimensiunea de lucru",{o:["14000 x 3200 mm","26000 x 2500 mm","26000 x 3200 mm"]}), S_MAT, S_TH, S_KW,
+   step("opt","Opțiuni",{multi:1, o:["Alimentare semi-automată","Construcție în consolă (pe o parte)"].concat(EXTRA_LASER)})],
+  std:"Cap 3D pentru teșire · Sursă Raycus · Structură portal",
+  model:function (A) { return "MLT 3D H-BEAM 7 axe " + (A.masa || "").replace(" mm", ""); }}
 ];
-window.MLT_CFG={WA:WA,MAIL:MAIL,COD:COD,PW:PW,KW:KW,T:T,MAT:MATS};
-})();
-// CONFIGURATOR 2/3 - DATE: sudura, curatare, robot, abkant + model recomandat + aspect
-(function go(){
-var C=window.MLT_CFG;if(!C){if(!go.w){go.w=1;document.addEventListener("DOMContentLoaded",go);}return;}if(C.model)return;
-C.T.push(
-{n:"Sudură laser manuală",c:"mlw",s:[{k:"kw",t:"Puterea sursei",o:["1,5 kW","2 kW","3 kW","Nu știu - recomandați-mi"]},{k:"mat",t:"Ce sudezi?",m:1,o:["Oțel carbon","Inox","Aluminiu"]},{k:"gros",t:"Grosimea materialului",o:["0,5 - 2 mm","2 - 4 mm","4 - 6 mm","peste 6 mm (la cerere)"]},{k:"opt",t:"Opțiuni",m:1,o:["Alimentator sârmă (dublu)","Răcire cu aer (fără chiller)","Funcție curățare (3 în 1)","Funcție tăiere (4 în 1)"]}]},
-{n:"Curățare laser",c:"mlc",s:[{k:"tip",t:"Tip curățare",o:["Continuă - rugină, vopsea groasă, suprafețe mari","Pulsată - fină, fără să afecteze materialul","Nu știu - recomandați-mi"]},{k:"kw",t:"Puterea sursei",o:["1,5 kW","2 kW","3 kW","Nu știu - recomandați-mi"]},{k:"ce",t:"Ce cureți?",m:1,o:["Rugină","Vopsea","Ulei / grăsime","Oxizi după sudură","Matrițe / piese"]}]},
-{n:"4 în 1: sudură, curățare, tăiere",c:"ccwp",s:[{k:"kw",t:"Puterea sursei",o:["1,5 kW","2 kW","3 kW"]},{k:"mat",t:"Materiale",m:1,o:["Oțel carbon","Inox","Aluminiu"]}]},
-{n:"Robot sudură laser 6 axe",c:"robot",s:[{k:"apl",t:"Aplicația",m:1,o:["Sudură 3D","Tăiere 3D"]},{k:"kw",t:"Puterea sursei",o:["1,5 kW","2 kW","3 kW","Nu știu - recomandați-mi"]},{k:"opt",t:"Opțiuni",m:1,o:["Urmărire cusătură fără contact","Coordonare mai multe stații","Alimentare automată sârmă"]}]},
-{n:"Abkant / îndoire",c:"abkant",s:[{k:"lung",t:"Lungime și forță",o:["3200 mm / 100 t (bendIT dbE it 3,2-100)","Altă dimensiune - la cerere"]},{k:"gros",t:"Grosimea maximă a tablei",o:["până la 3 mm","3 - 6 mm","6 - 10 mm","peste 10 mm"]}]}
-);
-C.kwTxt=function(w){return(w/1000+"").replace(".",",")+" kW";};
-C.rec=function(A){var m=C.PW[A.mat]||C.PW["Oțel carbon"],g=parseFloat((A.gros||"").replace(/^peste (\d+)/,"$1.1"));if(!g)return null;
-var k=Object.keys(m).map(Number).sort(function(a,b){return a-b});for(var j=0;j<k.length;j++)if(g<=k[j])return m[k[j]];return 30000;};
-C.model=function(tip,A){var COD=C.COD;
-var c=tip.c,cod=COD[A.masa]||"",d=(A.dia||"").replace(/\D/g,""),p=/rotej/.test(A.var||"");
-if(c=="rover")return(p?"ARMORED ":"")+"ROVER MLT "+cod;
-if(c=="cannon")return p?"ARMORED AUTOMATIC CANNON MLT-P6-"+(d||"240"):"CANNON MLT-P6-"+(d.length>3?"la cerere":d);
-if(c=="cannonrover")return(p?"ARMORED ":"")+"CANNON ROVER MLT-P6-"+cod+" / "+d;
-if(c=="tank")return"thermoTANK MLT "+cod;if(c=="tankcanon")return"thermoTHANK CANON MLT "+cod;
-if(c=="mlw")return/3 în 1|4 în 1/.test(A.opt||"")?"4 SHOTS ML-CCWP":"MACHINE GUN ML-W";
-if(c=="mlc")return"MACHINE GUN ML-C";if(c=="ccwp")return"4 SHOTS ML-CCWP";if(c=="robot")return"MLT Laser Welding Robot 6 axe";return"bendIT dbE it 3,2-100";};
-if(/configurator/.test(location.pathname)){var st=document.createElement("style");
-st.textContent=".page__static-content,.page__content{visibility:hidden}.page__static-content:has(#mlt-cfg),.page__content:has(#mlt-cfg){visibility:visible}#mlt-cfg{max-width:860px;margin:0 auto;font-family:inherit}.cf{background:#e9ebe4;border-radius:12px;padding:20px;color:#2f3a12}.cf h2{margin:0 0 4px;font-size:24px;color:#2f3a12}.cf .sub{margin:0 0 14px;color:#4b5320}"+
-".cf-bar{height:8px;background:#c9cdbf;border-radius:4px;overflow:hidden;margin-bottom:16px}.cf-bar i{display:block;height:100%;background:#4b5320;transition:width .3s}"+
-".cf h3{margin:0 0 12px;font-size:19px}.cf-o{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}"+
-".cf-o button{text-align:left;padding:13px 14px;border:2px solid #c9cdbf;border-radius:8px;background:#fff;color:#2f3a12;font-weight:600;font-size:15px;cursor:pointer}"+
-".cf-o button:hover{border-color:#4b5320}.cf-o button.on{background:#4b5320;border-color:#4b5320;color:#fff}.cf-o small{display:block;font-weight:400;opacity:.8}"+
-".cf-nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px;flex-wrap:wrap}.cf-b{padding:12px 22px;border:0;border-radius:6px;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none!important;display:inline-block}"+
-".cf-g{background:#4b5320;color:#fff!important}.cf-l{background:#fff;color:#2f3a12;border:1px solid #c9cdbf}.cf-w{background:#25d366;color:#fff!important}"+
-".cf table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden}.cf td{padding:9px 12px;border-bottom:1px solid #e1e4da;vertical-align:top}.cf td:first-child{font-weight:700;width:42%}"+
-".cf-rec{background:#fff;border-left:5px solid #4b5320;padding:12px 14px;border-radius:6px;margin:0 0 14px}.cf input{width:100%;padding:11px;border:1px solid #c9cdbf;border-radius:6px;font-size:15px;box-sizing:border-box;margin-top:8px}";
-document.head.appendChild(st);}
-})();
-// CONFIGURATOR 3/3 - FUNCTIONARE
-(function(){
-function init(){
-var C=window.MLT_CFG;if(!C||!C.model)return;var el=document.getElementById("mlt-cfg");
-if(!el&&/configurator/.test(location.pathname)){var pc=document.querySelector(".page__static-content,.page__content");if(!pc)return;pc.innerHTML='<div id="mlt-cfg"></div>';el=pc.firstChild;}
-if(!el||el.dataset.ok)return;el.dataset.ok=1;
-var WA=C.WA,MAIL=C.MAIL,PW=C.PW,KW=C.KW,T=C.T;function model(){return C.model(tip,A);}
-var tip=null,i=0,A={};
-function rec(){return C.rec?C.rec(A):null;}function kwTxt(w){return C.kwTxt?C.kwTxt(w):w/1e3+" kW";}
-function dsc(){return/^Deschis/.test(A.var||"")&&/rover/.test(tip.c);}
-function opts(s){
-if(s.g){var m=PW[A.mat]||PW["Oțel carbon"],o=[];Object.keys(m).map(Number).sort(function(a,b){return a-b}).forEach(function(g){if(!dsc()||m[g]<=6000)o.push(g%1?"peste "+Math.floor(g)+" mm":g+" mm")});o.push("Nu știu încă");return o;}
-if(s.p){var r=rec(),o=KW.filter(function(x){return!C.ok||C.ok(x,A,tip)});o.push("Nu știu - recomandați-mi");return o.map(function(x){return r&&x==kwTxt(r)?x+"|recomandat pentru "+A.gros+" "+A.mat.toLowerCase():x});}
-return /^Deschis/.test(A.var||"")?s.o.filter(function(x){return!/cabin|video|schimb/i.test(x)}):s.o;}
-function rezumat(){var r=["Utilaj: "+tip.n,"Model recomandat: "+model()];tip.s.forEach(function(s){if(A[s.k])r.push(s.t+": "+A[s.k])});return r;}
-function draw(){
-var h='<div class="cf"><h2>Configurator utilaj MLT</h2><p class="sub">Alege pas cu pas și primești recomandarea și oferta pe WhatsApp.</p>';
-var tot=tip?tip.s.length+2:1,pas=tip?i+1:0;h+='<div class="cf-bar"><i style="width:'+Math.round(pas/tot*100)+'%"></i></div>';
-if(!tip){h+='<h3>Ce utilaj te interesează?</h3><div class="cf-o">';T.forEach(function(t,k){h+='<button data-t="'+k+'">'+t.n+'</button>'});h+='</div></div>';}
-else if(i<tip.s.length){var s=tip.s[i],sel=(A[s.k]||"").split("; ");h+='<h3>'+s.t+'</h3>'+(s.g&&dsc()?'<p class="sub">Varianta deschisă merge până la 6 kW. Pentru grosimi mai mari alege varianta protejată (ARMORED).</p>':'')+'<div class="cf-o">';
-opts(s).forEach(function(o){var v=o.split("|")[0];h+='<button data-v="'+v+'" class="'+(sel.indexOf(v)>-1?"on":"")+'">'+v+(o.split("|")[1]?'<small>✔ '+o.split("|")[1]+'</small>':'')+'</button>'});
-h+='</div><div class="cf-nav"><button class="cf-b cf-l" data-back>← Înapoi</button>'+(s.m?'<button class="cf-b cf-g" data-next>Continuă →</button>':'')+'</div></div>';}
-else{var r=rezumat(),w=rec();h+='<h3>Configurația ta</h3><div class="cf-rec"><b>'+model()+'</b>'+(w&&tip.s.some(function(s){return s.p})?'<br>Putere minimă pentru '+A.gros+' '+A.mat.toLowerCase()+': <b>'+kwTxt(w)+'</b>':'')+'</div><table>';
-r.slice(2).forEach(function(l){var x=l.split(": ");h+='<tr><td>'+x[0]+'</td><td>'+x.slice(1).join(": ")+'</td></tr>'});
-h+='</table><input id="cf-t" type="tel" placeholder="Telefon (pentru Te sunăm)"><input id="cf-n" placeholder="Nume și firmă"><input id="cf-l" placeholder="Localitate"><div class="cf-nav"><button class="cf-b cf-l" data-back>← Înapoi</button><span class="cf-s">'+C.btns(tip,A)+'</span></div><p style="margin:12px 0 0;font-size:13px;opacity:.8">Toate utilajele se configurează la comandă. Recomandarea e orientativă - confirmăm configurația exactă împreună.</p></div>';}
-el.innerHTML=h;}
-el.addEventListener("click",function(e){var b=e.target.closest("button,a");if(!b)return;
-if(b.dataset.t!=null){tip=T[+b.dataset.t];i=0;A={};return draw();}
-if(b.hasAttribute("data-back")){if(i>0)i--;else tip=null;return draw();}
-if(b.hasAttribute("data-next")){i++;return draw();}
-if(b.dataset.v!=null){var s=tip.s[i],v=b.dataset.v;
-if(s.m){var a=A[s.k]?A[s.k].split("; "):[],j=a.indexOf(v);j>-1?a.splice(j,1):a.push(v);A[s.k]=a.join("; ");b.classList.toggle("on");return;}
-A[s.k]=v;if(s.k=="mat"&&A.gros)delete A.gros;i++;return draw();}
-if(b.dataset.send){var f=document.getElementById("cf-t"),tel=f.value.trim(),n=document.getElementById("cf-n").value,l=document.getElementById("cf-l").value;
-var t="Bună ziua! Am configurat pe site un utilaj:\n"+rezumat().join("\n")+(tel?"\nTelefon: "+tel:"")+(n?"\nNume/firmă: "+n:"")+(l?"\nLocalitate: "+l:"")+"\nVă rog să mă sunați cu oferta. Mulțumesc!";
-C.send(b,e,f,t,tel,n,model());}
-});
-draw();
+// abkant: forta (t), lungime (mm), motor (kW), greutate (kg) - din fisa tehnica
+var BRAKES = [[50,1600,5.5,4000],[70,2500,7.9,6500],[100,3200,7.9,9300],[100,4100,7.9,11000],[160,4100,11,13800],
+  [200,4100,15,14800],[200,6100,15,20500],[250,4100,18.5,15000],[400,4100,45,32600],[500,6100,63,51000]];
+function brakeLbl(b) { return (b[1] / 1000 + "").replace(".", ",") + " m / " + b[0] + " t"; }
+
+/* ================= LOGICA ================= */
+var st = {tip: null, i: -1, A: {}, frame: 1, group: "sheet_exchange_enclosed"};
+function tip() { return T.filter(function (t) { return t.id === st.tip; })[0]; }
+function variant() { var t = tip(); return t && t.variants.filter(function (x) { return x.id === st.A.variant; })[0]; }
+function steps() {
+  var t = tip(); if (!t) return [];
+  return t.steps.filter(function (s) { return (!s.only || s.only === st.A.variant) && (!s.not || s.not !== st.A.variant); });
 }
-init();document.addEventListener("DOMContentLoaded",init);window.addEventListener("load",init);
-})();
-// CONFIGURATOR 4/4 - LIMITE PUTERE ROVER + LINK SPRE PAGINA UTILAJULUI
-(function go(){
-var C=window.MLT_CFG;if(!C){if(!go.w){go.w=1;document.addEventListener("DOMContentLoaded",go);}return;}
-// puteri laser ROVER / CANNON ROVER: deschis pana la 6 kW, protejat (ARMORED) peste 6 kW
-C.ok=function(x,A,tip){var w=parseFloat(x.replace(",","."));if(!/rover/.test(tip.c)||isNaN(w))return true;return/^Deschis/.test(A.var||"")?w<=6:w>6;};
-// pagina produsului care corespunde alegerii (deschis / protejat)
-C.link=function(tip,A){var p=/rotej/.test(A.var||""),L={
-rover:p?"armored-rover-mlt-cnc-laser-debitare-tabla-protejat-375":"rover-mlt-cnc-laser-debitare-tabla-deschis-374",
-cannon:p?"armored-automatic-cannon-mlt-p6-cnc-laser-debitare-autoload-protejat-377":"cannon-mlt-p6-cnc-debitare-laser-profile-deschis-376",
-cannonrover:p?"armored-cannon-rover-mlt-p6-cnc-laser-debitare-tabla-si-profile-379":"cannon-rover-mlt-p6-cnc-taiere-laser-tabla-si-profile-deschis-383",
-tank:"thermotank-plasma-mlt-391",tankcanon:"thermothank-canon-plasma-tabla-profile-392",
-mlw:"machine-gun-ml-w-sudura-laser-380",mlc:"machine-gun-ml-c-curatare-laser-381",
-ccwp:"4-shots-ml-ccwp-sudura-curatare-curatare-cu-pulsatie-taiere-laser-382",
-robot:"mlt-laser-welding-robot-automatic-6-axis-387",abkant:"abkant-393"};
-return"/cumpara/"+L[tip.c];};
-// trimite cererea prin formularul de contact al site-ului, fara sa paraseasca pagina ([MLT-OK] = trece de filtrul Gmail)
-C.lead=function(msg,tel,name,cb){
-fetch("/contact",{credentials:"same-origin"}).then(function(r){return r.text();}).then(function(h){
-var f=new DOMParser().parseFromString(h,"text/html").getElementById("customer_contact");if(!f)throw 0;
-var fd=new FormData(),rs="";
-[].forEach.call(f.elements,function(e){if(e.name&&e.type!="checkbox")fd.set(e.name,e.value);});
-var sel=f.querySelector('select[name="customer_contact[reason]"]');
-if(sel)[].forEach.call(sel.options,function(o){if(o.value&&(!rs||/produs/i.test(o.text)))rs=o.value;});
-fd.set("customer_contact[name]",name||"Client configurator");fd.set("customer_contact[email]",C.MAIL);
-fd.set("customer_contact[phone]",tel);fd.set("customer_contact[company]",(name?name+" ":"")+"[MLT-OK]");
-fd.set("customer_contact[reason]",rs);fd.set("customer_contact[message]",msg);fd.set("customer_contact[agree_terms]","1");
-return fetch(f.getAttribute("action")||"/contact",{method:"POST",body:fd,credentials:"same-origin"});
-}).then(function(r){cb(r.ok);}).catch(function(){cb(false);});};
-// butoanele de trimitere: Vezi utilajul / WhatsApp / Te sunăm / Email
-C.btns=function(tip,A){return'<a class="cf-b cf-l" target="_blank" href="'+C.link(tip,A)+'">Vezi utilajul</a><a class="cf-b cf-w" data-send="wa" target="_blank" rel="noopener">WhatsApp</a><a class="cf-b cf-g" data-send="call">Te sunăm noi</a><a class="cf-b cf-l" data-send="mail" title="'+C.MAIL+'">Email</a>';};
-C.send=function(b,e,f,t,tel,n,mod){var k=b.dataset.send;
-if(k=="wa")b.href="https://wa.me/"+C.WA+"?text="+encodeURIComponent(t);
-if(k=="mail")b.href="mailto:"+C.MAIL+"?subject="+encodeURIComponent("Configurator: "+mod)+"&body="+encodeURIComponent(t);
-if(k=="call"){e.preventDefault();if(tel.replace(/\D/g,"").length<9){f.style.borderColor="#c0392b";f.placeholder="Scrie telefonul ca să te sunăm";f.focus();return;}
-b.textContent="Se trimite...";C.lead(t,tel,n,function(ok){b.parentNode.innerHTML='<b>'+(ok?"✔ Mulțumim! Te sunăm în curând.":"Nu s-a putut trimite - scrie-ne pe WhatsApp.")+'</b>';});}};
-if(/configurator/.test(location.pathname)){var st=document.createElement("style");st.textContent=".cf-s{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}.cf-s .cf-b{padding:10px 15px;font-size:14px}";document.head.appendChild(st);}
+function armored() { return st.A.variant === "arm"; }
+function kwTxt(w) { return (w / 1000 + "").replace(".", ",") + " kW"; }
+function recKw() {
+  var m = PW[st.A.mat] || PW["Oțel carbon"], g = parseFloat((st.A.gros || "").replace(/^peste (\d+)/, "$1.1"));
+  if (!g) return null;
+  var k = Object.keys(m).map(Number).sort(function (a, b) { return a - b; });
+  for (var j = 0; j < k.length; j++) if (g <= k[j]) return kwTxt(m[k[j]]);
+  return "30 kW";
+}
+function options(s) {
+  var t = tip();
+  if (s.laserTh) {
+    var m = PW[st.A.mat] || PW["Oțel carbon"], o = [];
+    Object.keys(m).map(Number).sort(function (a, b) { return a - b; }).forEach(function (g) {
+      if (!(t.rover && !armored()) || m[g] <= 6000) o.push(g % 1 ? "peste " + Math.floor(g) + " mm" : g + " mm");
+    });
+    o.push("Nu știu încă"); return o;
+  }
+  if (s.laserKw) {
+    return KW.filter(function (x) {
+      var w = parseFloat(x.replace(",", "."));
+      return !t.rover || (armored() ? w > 6 : w <= 6);
+    }).concat([NUSTIU]);
+  }
+  if (s.brake) return BRAKES.map(brakeLbl).concat(["Altă dimensiune - la cerere"]);
+  // varianta deschisa nu are cabina, video sau masa de schimb
+  if (s.k === "opt" && t.rover && !armored()) return s.o.filter(function (x) { return !/cabin|video|schimb/i.test(x); });
+  return s.o;
+}
+function recFor(s) { return s.laserKw ? recKw() : s.rec ? s.rec(st.A) : null; }
+function model() { var t = tip(); return t && st.A.variant ? t.model(st.A) : ""; }
+function rezumat() {
+  var t = tip(), r = ["Utilaj: " + t.n + " · " + variant().t, "Model recomandat: " + model()];
+  steps().forEach(function (s) { if (st.A[s.k]) r.push(s.t + ": " + st.A[s.k]); });
+  return r;
+}
+
+/* ================= STIL ================= */
+var CSS = ""
++ ":host{all:initial;display:block;--bg:#0b0d0a;--panel:#12160f;--panel2:#181e14;--line:#2c3824;--line2:#3d4d31;--olive:#5f7a3d;--olive2:#86a85a;--accent:#b8d86b;--amber:#e0a83a;--text:#e6ebdf;--muted:#8f9a84;"
++ "--mono:'Share Tech Mono',monospace;--head:'Rajdhani',sans-serif;--body:'Inter',system-ui,sans-serif}"
++ "*{box-sizing:border-box}"
++ ".root{position:relative;container-type:inline-size;background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.4;"
++ "background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:48px 48px;overflow:hidden}"
++ ".root::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(11,13,10,.55),rgba(11,13,10,.96) 70%);pointer-events:none}"
++ ".wrap{position:relative;padding:20px 22px 30px}"
++ "header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line2);padding-bottom:14px;margin-bottom:18px}"
++ ".brand{display:flex;align-items:center;gap:14px}"
++ ".badge{width:46px;height:46px;border:2px solid var(--olive2);display:grid;place-items:center;font-family:var(--head);font-weight:700;color:var(--accent);clip-path:polygon(15% 0,85% 0,100% 15%,100% 85%,85% 100%,15% 100%,0 85%,0 15%);background:var(--panel2)}"
++ ".brand h1{margin:0;font-family:var(--head);font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--text);line-height:1.1}"
++ ".brand small{display:block;font-family:var(--mono);color:var(--muted);font-size:12px;letter-spacing:1px}"
++ ".status{font-family:var(--mono);font-size:12px;color:var(--accent);display:flex;gap:18px;flex-wrap:wrap}"
++ ".status span::before{content:'';display:inline-block;width:7px;height:7px;background:var(--accent);margin-right:6px;border-radius:50%;box-shadow:0 0 8px var(--accent);animation:blink 1.6s infinite}"
++ "@keyframes blink{50%{opacity:.25}}"
++ ".grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(340px,1fr);gap:18px}"
++ ".viewer,.panel{min-width:0}"
++ ".viewer{position:relative;background:var(--panel);border:1px solid var(--line2);display:flex;flex-direction:column}"
++ ".hud{position:absolute;inset:10px;pointer-events:none}.hud i{position:absolute;width:22px;height:22px;border-color:var(--olive2);border-style:solid}"
++ ".hud i:nth-child(1){top:0;left:0;border-width:2px 0 0 2px}.hud i:nth-child(2){top:0;right:0;border-width:2px 2px 0 0}"
++ ".hud i:nth-child(3){bottom:0;left:0;border-width:0 0 2px 2px}.hud i:nth-child(4){bottom:0;right:0;border-width:0 2px 2px 0}"
++ ".vtop{display:flex;justify-content:space-between;gap:10px;padding:18px 26px 0;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:1px}.vtop b{color:var(--accent);font-weight:400}"
++ ".stage{position:relative;cursor:grab;user-select:none;touch-action:pan-y;display:grid;place-items:center;padding:10px 26px;height:420px;"
++ "background:radial-gradient(ellipse at 50% 60%,#e9ece4 0%,#cfd5c6 55%,#9aa38f 100%);margin:14px 26px 0;border:1px solid var(--line2);overflow:hidden}"
++ ".stage:active{cursor:grabbing}.stage img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 18px 18px rgba(0,0,0,.25))}"
++ ".hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:#3b4630;background:rgba(255,255,255,.6);padding:4px 10px;letter-spacing:1px;white-space:nowrap}"
++ ".scan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;top:0}"
++ ".stage.swap .scan{animation:scan .7s ease-out}@keyframes scan{0%{top:0;opacity:.9}100%{top:100%;opacity:0}}"
++ ".thumbs{display:flex;gap:8px;padding:12px 26px 22px;overflow-x:auto}"
++ ".thumbs button{flex:0 0 auto;width:78px;height:56px;border:1px solid var(--line2);background:#d9ddd2;padding:3px;cursor:pointer}"
++ ".thumbs button img{width:100%;height:100%;object-fit:contain}.thumbs button.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}"
++ ".vname{padding:0 26px;font-family:var(--head);font-size:28px;font-weight:700;letter-spacing:1px;margin-top:8px;line-height:1.15}"
++ ".vcode{padding:2px 26px 0;font-family:var(--mono);color:var(--amber);font-size:14px;letter-spacing:2px}"
++ ".panel{background:var(--panel);border:1px solid var(--line2);padding:22px;display:flex;flex-direction:column}"
++ ".progress{display:flex;gap:4px;margin-bottom:16px}.progress div{flex:1;height:5px;background:var(--line)}"
++ ".progress div.done{background:var(--olive2)}.progress div.cur{background:var(--accent);box-shadow:0 0 8px var(--accent)}"
++ ".stepno{font-family:var(--mono);color:var(--muted);font-size:12px;letter-spacing:2px}"
++ ".panel h2{font-family:var(--head);font-size:26px;margin:4px 0;letter-spacing:.5px;color:var(--text);line-height:1.15}"
++ ".sub{color:var(--muted);margin:0 0 16px;font-size:14px}.warn{color:var(--amber)}"
++ ".opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}"
++ ".opt{position:relative;text-align:left;background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:12px;cursor:pointer;font:inherit;font-size:14px;display:flex;flex-direction:column;gap:6px;transition:border-color .15s,transform .15s}"
++ ".opt:hover{border-color:var(--olive2);transform:translateY(-1px)}.opt.sel{border-color:var(--accent);background:#1f2818}"
++ ".opt .t{font-weight:600}.opt .d{color:var(--muted);font-size:12.5px;line-height:1.35}"
++ ".opt .pic{height:84px;background:#d9ddd2;display:grid;place-items:center;margin:-4px -4px 4px}.opt .pic img{max-width:100%;max-height:80px;object-fit:contain}"
++ ".tag{position:absolute;top:8px;right:8px;font-family:var(--mono);font-size:10px;background:var(--amber);color:#1a1300;padding:2px 6px;letter-spacing:1px}"
++ ".opts.chips{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}.opts.chips .opt{align-items:center;text-align:center;font-family:var(--mono)}"
++ ".opt .rec{font-family:var(--mono);font-size:11px;color:var(--accent)}"
++ ".opt.multi::before{content:'';position:absolute;top:12px;right:12px;width:14px;height:14px;border:1px solid var(--olive2)}"
++ ".opt.multi{padding-right:34px}.opt.multi.sel::before{background:var(--accent);box-shadow:inset 0 0 0 3px var(--panel2)}"
++ ".nav{display:flex;justify-content:space-between;gap:10px;margin-top:auto;padding-top:18px;flex-wrap:wrap}.nav span{display:flex;gap:8px;flex-wrap:wrap}"
++ ".btn{font-family:var(--head);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:15px;padding:11px 16px;white-space:nowrap;text-decoration:none;border:1px solid var(--line2);background:transparent;color:var(--text);cursor:pointer;display:inline-block;line-height:1.2}"
++ ".btn:hover{border-color:var(--olive2)}.btn.go{background:var(--olive);border-color:var(--olive2);color:#fff}.btn.go:hover{background:var(--olive2)}"
++ ".btn.wa{background:#25d366;border-color:#25d366;color:#05210f}"
++ ".sheet{border:1px solid var(--line2);background:var(--panel2);padding:16px;position:relative}"
++ ".stamp{position:absolute;top:12px;right:12px;transform:rotate(8deg);border:2px solid var(--amber);color:var(--amber);font-family:var(--head);font-weight:700;padding:3px 10px;letter-spacing:2px;font-size:13px}"
++ ".sheet h3{margin:0 0 2px;font-family:var(--mono);color:var(--muted);font-size:12px;letter-spacing:2px;font-weight:400}"
++ ".code{font-family:var(--head);font-weight:700;font-size:26px;color:var(--accent);letter-spacing:1px;padding-right:110px;line-height:1.15}"
++ ".rows{margin-top:10px;display:grid;grid-template-columns:auto 1fr}.rows div{padding:7px 0;border-bottom:1px dashed var(--line2);font-size:13.5px}"
++ ".rows div:nth-child(odd){font-family:var(--mono);color:var(--muted);padding-right:14px;font-size:12px;letter-spacing:.5px;text-transform:uppercase}"
++ ".note{font-size:12px;color:var(--muted);margin-top:10px}"
++ ".lead{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px}"
++ ".lead input{background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:11px;font:inherit;font-size:14px;width:100%}"
++ ".lead input:focus{outline:none;border-color:var(--olive2)}.lead input.bad{border-color:#c0392b}"
++ ".ok{color:var(--accent);font-weight:600}"
++ "@container (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}.stage{height:300px}}"
++ "@container (max-width:560px){.wrap{padding:14px 12px 24px}.opts,.lead{grid-template-columns:1fr}.vname{font-size:22px}.status{display:none}"
++ ".vtop,.vname,.vcode{padding-left:14px;padding-right:14px}.stage{margin:12px 12px 0;padding:8px;height:240px}.thumbs{padding:10px 12px 16px}.panel{padding:16px}.hint{font-size:9px}}";
+
+/* ================= RANDARE ================= */
+var host, root, $;
+function src(g, i) { return IMG + g + "/" + (i < 10 ? "0" : "") + i + ".webp"; }
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+function setGroup(g) { if (st.group === g) return; st.group = g; st.frame = 1; viewer(true); }
+function viewer(anim) {
+  var n = FRAMES[st.group], img = $("#mainImg"), t = tip(), v = variant();
+  img.src = src(st.group, st.frame);
+  $("#frameLbl").textContent = (st.frame < 10 ? "0" : "") + st.frame + "/" + (n < 10 ? "0" : "") + n;
+  var h = ""; for (var i = 1; i <= n; i++) h += '<button class="' + (i === st.frame ? "on" : "") + '" data-f="' + i + '" aria-label="Unghi ' + i + '"><img src="' + src(st.group, i) + '" alt="" loading="lazy"></button>';
+  $("#thumbs").innerHTML = h;
+  if (anim) { var s = $("#stage"); s.classList.remove("swap"); void s.offsetWidth; s.classList.add("swap"); }
+  for (var j = 1; j <= n; j++) { var p = new Image(); p.src = src(st.group, j); }
+  $("#vName").textContent = v ? v.t : t ? t.n : "Alege tipul de utilaj";
+  $("#vCode").textContent = model() || "MLT";
+  $("#cfgLbl").textContent = st.i >= steps().length ? "CONFIGURAȚIE COMPLETĂ" : "CONFIGURAȚIE ÎN LUCRU";
+}
+function progress(total) {
+  var cur = st.tip ? st.i + 2 : 0, h = '<div class="progress">';
+  for (var i = 0; i < total; i++) h += '<div class="' + (i < cur ? "done" : i === cur ? "cur" : "") + '"></div>';
+  return h + "</div>";
+}
+function head(title, sub) {
+  var total = st.tip ? steps().length + 2 : 1, n = st.tip ? st.i + 2 : 1;
+  return progress(total) + '<div class="stepno">PAS ' + (n < 10 ? "0" : "") + n + " / " + (total < 10 ? "0" : "") + total + "</div><h2>" + title + "</h2>" + (sub ? '<p class="sub">' + sub + "</p>" : "");
+}
+function nav(next, label) {
+  return '<div class="nav">' + (st.tip ? '<span><button class="btn" data-act="home" title="Înapoi la început">⌂ Home</button><button class="btn" data-act="back">← Înapoi</button></span>' : "<span></span>")
+    + (next ? '<button class="btn go" data-act="next">' + (label || "Continuă") + " →</button>" : "") + "</div>";
+}
+function card(attr, val, sel, inner, cls) { return '<button class="opt ' + (cls || "") + (sel ? " sel" : "") + '" data-' + attr + '="' + esc(val) + '">' + inner + "</button>"; }
+function panel() {
+  var p = $("#panel"), t = tip(), ss = steps();
+  if (!t) {
+    p.innerHTML = head("Ce utilaj te interesează?", "Alege categoria. Imaginea mare se schimbă după alegere.")
+      + '<div class="opts">' + T.map(function (x, k) { return card("t", k, false, '<div class="pic"><img src="' + src(x.g, 1) + '" alt=""></div><span class="t">' + x.n + '</span><span class="d">' + x.d + "</span>"); }).join("") + "</div>";
+    return;
+  }
+  if (st.i < 0) {
+    p.innerHTML = head("Varianta", "Vezi fiecare variantă în imagine înainte să alegi.")
+      + '<div class="opts">' + t.variants.map(function (x) { return card("var", x.id, st.A.variant === x.id, (x.tag ? '<span class="tag">' + x.tag + "</span>" : "") + '<div class="pic"><img src="' + src(x.g, 1) + '" alt=""></div><span class="t">' + x.t + '</span><span class="d">' + x.d + "</span>"); }).join("") + "</div>" + nav(false);
+    return;
+  }
+  if (st.i < ss.length) {
+    var s = ss[st.i], o = options(s), r = recFor(s), cur = (st.A[s.k] || "").split("; "), chips = o.every(function (x) { return x.length < 16; });
+    var sub = s.multi ? "Poți alege mai multe." : r ? 'Recomandat: <b class="ok">' + r + "</b> (orientativ, din tabelul nostru kW/mm)." : "";
+    if (s.laserTh && t.rover && !armored()) sub = "Varianta deschisă merge până la 6 kW. Pentru grosimi mai mari alege varianta protejată (ARMORED).";
+    p.innerHTML = head(s.t, sub) + '<div class="opts' + (chips && !s.multi ? " chips" : "") + '">'
+      + o.map(function (x) { return card("v", x, cur.indexOf(x) > -1, '<span class="t">' + x + "</span>" + (r && x === r ? '<span class="rec">✔ recomandat</span>' : ""), s.multi ? "multi" : ""); }).join("")
+      + "</div>" + nav(!!s.multi, s.k === "opt" ? "Vezi configurația" : "Continuă");
+    return;
+  }
+  // configuratia finala
+  var v = variant(), rows = [];
+  rezumat().slice(2).forEach(function (l) { var x = l.split(": "); rows.push([x[0], x.slice(1).join(": ")]); });
+  if (t.id === "brake") { var b = BRAKES.filter(function (x) { return brakeLbl(x) === (st.A.lung || ""); })[0];
+    if (b) rows.push(["Motor principal", b[2] + " kW"], ["Greutate", b[3].toLocaleString("ro-RO") + " kg"]); }
+  Object.keys(v.specs || {}).forEach(function (k) { rows.push([k, v.specs[k]]); });
+  if (t.std && st.A.variant !== "mlc") rows.push(["Configurație standard", t.std]);
+  rows.push(["Certificare", CE]);
+  p.innerHTML = progress(ss.length + 2) + '<div class="stepno">CONFIGURAȚIE FINALIZATĂ</div><h2>Configurația ta</h2>'
+    + '<div class="sheet"><div class="stamp">CE CERTIFIED</div><h3>MODEL RECOMANDAT</h3><div class="code">' + esc(model()) + "</div>"
+    + '<div class="rows">' + rows.map(function (x) { return "<div>" + esc(x[0]) + "</div><div>" + esc(x[1]) + "</div>"; }).join("") + "</div>"
+    + '<div class="note">Toate utilajele se configurează la comandă. Recomandarea e orientativă - confirmăm configurația exactă împreună.</div></div>'
+    + '<div class="lead"><input id="cf-t" type="tel" placeholder="Telefon (pentru Te sunăm)"><input id="cf-n" placeholder="Nume și firmă"><input id="cf-l" placeholder="Localitate"></div>'
+    + '<div class="nav"><span><button class="btn" data-act="home">⌂ Home</button><button class="btn" data-act="back">← Modifică</button></span><span id="send">'
+    + (t.link ? '<a class="btn" target="_blank" href="/cumpara/' + t.link(st.A) + '">Vezi utilajul</a>' : "")
+    + '<a class="btn wa" data-send="wa" target="_blank" rel="noopener">WhatsApp</a><a class="btn go" data-send="call" href="#">Te sunăm noi</a><a class="btn" data-send="mail" title="' + MAIL + '">Email</a></span></div>';
+}
+function render() { panel(); viewer(); }
+
+/* trimite cererea prin formularul de contact al site-ului, fara sa paraseasca pagina ([MLT-OK] = trece de filtrul Gmail) */
+function lead(msg, tel, name, cb) {
+  fetch("/contact", {credentials: "same-origin"}).then(function (r) { return r.text(); }).then(function (h) {
+    var f = new DOMParser().parseFromString(h, "text/html").getElementById("customer_contact"); if (!f) throw 0;
+    var fd = new FormData(), rs = "";
+    [].forEach.call(f.elements, function (e) { if (e.name && e.type !== "checkbox") fd.set(e.name, e.value); });
+    var sel = f.querySelector('select[name="customer_contact[reason]"]');
+    if (sel) [].forEach.call(sel.options, function (o) { if (o.value && (!rs || /produs/i.test(o.text))) rs = o.value; });
+    fd.set("customer_contact[name]", name || "Client configurator"); fd.set("customer_contact[email]", MAIL);
+    fd.set("customer_contact[phone]", tel); fd.set("customer_contact[company]", (name ? name + " " : "") + "[MLT-OK]");
+    fd.set("customer_contact[reason]", rs); fd.set("customer_contact[message]", msg); fd.set("customer_contact[agree_terms]", "1");
+    return fetch(f.getAttribute("action") || "/contact", {method: "POST", body: fd, credentials: "same-origin"});
+  }).then(function (r) { cb(r.ok); }).catch(function () { cb(false); });
+}
+
+function onClick(e) {
+  var b = e.target.closest("button,a"); if (!b) return;
+  var d = b.dataset, t = tip();
+  if (d.f) { st.frame = +d.f; return viewer(); }
+  if (d.t != null) { st.tip = T[+d.t].id; st.i = -1; st.A = {}; setGroup(tip().g); return render(); }
+  if (d.var != null) { if (st.A.variant !== d.var) st.A = {}; st.A.variant = d.var; setGroup(variant().g); st.i = 0; return render(); }
+  if (d.v != null) {
+    var s = steps()[st.i];
+    if (s.multi) { var a = st.A[s.k] ? st.A[s.k].split("; ") : [], j = a.indexOf(d.v); j > -1 ? a.splice(j, 1) : a.push(d.v); st.A[s.k] = a.join("; "); b.classList.toggle("sel"); return; }
+    st.A[s.k] = d.v;
+    if (s.k === "mat") { delete st.A.gros; delete st.A.kw; }
+    if (s.k === "gros") delete st.A.kw;
+    st.i++; return render();
+  }
+  if (d.act === "next") { st.i++; return render(); }
+  if (d.act === "back") { if (st.i >= 0) st.i--; else st.tip = null; if (!st.tip) setGroup("sheet_exchange_enclosed"); else if (st.i < 0) setGroup(tip().g); return render(); }
+  if (d.act === "home") { st.tip = null; st.i = -1; st.A = {}; setGroup("sheet_exchange_enclosed"); render(); host.scrollIntoView({behavior: "smooth", block: "start"}); return; }
+  if (d.send) {
+    var f = $("#cf-t"), tel = f.value.trim(), n = $("#cf-n").value, l = $("#cf-l").value;
+    var txt = "Bună ziua! Am configurat pe site un utilaj:\n" + rezumat().join("\n") + (tel ? "\nTelefon: " + tel : "") + (n ? "\nNume/firmă: " + n : "") + (l ? "\nLocalitate: " + l : "") + "\nVă rog să mă sunați cu oferta. Mulțumesc!";
+    if (d.send === "wa") b.href = "https://wa.me/" + WA + "?text=" + encodeURIComponent(txt);
+    if (d.send === "mail") b.href = "mailto:" + MAIL + "?subject=" + encodeURIComponent("Configurator: " + model()) + "&body=" + encodeURIComponent(txt);
+    if (d.send === "call") {
+      e.preventDefault();
+      if (tel.replace(/\D/g, "").length < 9) { f.classList.add("bad"); f.placeholder = "Scrie telefonul ca să te sunăm"; f.focus(); return; }
+      b.textContent = "Se trimite...";
+      lead(txt, tel, n, function (ok) { $("#send").innerHTML = '<b class="ok">' + (ok ? "✔ Mulțumim! Te sunăm în curând." : "Nu s-a putut trimite - scrie-ne pe WhatsApp.") + "</b>"; });
+    }
+  }
+}
+function drag() {
+  var s = $("#stage"), x0 = null, f0 = 1;
+  s.addEventListener("pointerdown", function (e) { x0 = e.clientX; f0 = st.frame; s.setPointerCapture(e.pointerId); });
+  s.addEventListener("pointermove", function (e) {
+    if (x0 === null) return; var n = FRAMES[st.group], k = Math.round((e.clientX - x0) / 70), f = ((f0 - 1 - k) % n + n) % n + 1;
+    if (f !== st.frame) { st.frame = f; viewer(); }
+  });
+  s.addEventListener("pointerup", function () { x0 = null; }); s.addEventListener("pointercancel", function () { x0 = null; });
+}
+
+/* ================= PORNIRE ================= */
+// pagina se ascunde pana apare configuratorul, ca sa nu clipeasca continutul vechi
+var pre = document.createElement("style");
+pre.textContent = ".page__static-content,.page__content{visibility:hidden}.page__static-content:has(#mlt-cfg),.page__content:has(#mlt-cfg){visibility:visible}#mlt-cfg{display:block;max-width:1440px;margin:0 auto}";
+document.head.appendChild(pre);
+if (!document.querySelector('link[href*="Rajdhani"]')) {
+  var fl = document.createElement("link"); fl.rel = "stylesheet";
+  fl.href = "https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap";
+  document.head.appendChild(fl);
+}
+function init() {
+  if (host) return;
+  var el = document.getElementById("mlt-cfg");
+  if (!el) { var pc = document.querySelector(".page__static-content,.page__content"); if (!pc) return; pc.innerHTML = '<div id="mlt-cfg"></div>'; el = pc.firstChild; }
+  if (el.dataset.ok) return; el.dataset.ok = 1; host = el;
+  root = el.attachShadow({mode: "open"});
+  $ = function (q) { return root.querySelector(q); };
+  root.innerHTML = "<style>" + CSS + "</style>"
+    + '<div class="root"><div class="wrap"><header><div class="brand"><div class="badge">MLT</div><div><h1>Configurator utilaj</h1><small>MILITARY LASER TECH · USA</small></div></div>'
+    + '<div class="status"><span>CE CERTIFIED</span><span>FABRICAT PE LINIE PROPRIE</span></div></header>'
+    + '<div class="grid"><section class="viewer"><div class="hud"><i></i><i></i><i></i><i></i></div>'
+    + '<div class="vtop"><span>VIZUALIZARE 360° · <b id="frameLbl">01/06</b></span><span id="cfgLbl">CONFIGURAȚIE ÎN LUCRU</span></div>'
+    + '<div class="stage" id="stage"><img id="mainImg" alt="Utilaj MLT" draggable="false"><div class="scan"></div><div class="hint">⟲ TRAGE CU MOUSE-UL SAU DEGETUL PENTRU A ROTI</div></div>'
+    + '<div class="vname" id="vName"></div><div class="vcode" id="vCode"></div><div class="thumbs" id="thumbs"></div></section>'
+    + '<section class="panel" id="panel"></section></div></div></div>';
+  root.addEventListener("click", onClick);
+  drag(); render();
+}
+init(); document.addEventListener("DOMContentLoaded", init); window.addEventListener("load", init);
 })();
