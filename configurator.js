@@ -16,7 +16,7 @@ var WA = "40730466920", MAIL = "contact@militarylasertech.com";
 
 /* ================= DATE ================= */
 var FRAMES = {sheet_open:7, sheet_enclosed:6, sheet_exchange_open:6, sheet_exchange_enclosed:6, platetube:6, platetube_exchange:6,
-  tube_2:5, tube_3:5, hbeam:7, cabinet:5, brake:6, robot:2, gen_ind:1, gen_home:5, forklift:3, solar:1};
+  tube_2:5, tube_3:5, hbeam:7, cabinet:5, brake:6, robot:2, gen_ind:6, gen_mob:4, gen_home:5, forklift:6, forklift_d:1, forklift_gpl:1, forklift_e3:1, forklift_e4:1, forklift_hd:1, forklift_hdx:2, forklift_st:1, solar:1, start:1};
 var MESE = ["3000 x 1500 mm","4000 x 2000 mm","6000 x 2000 mm","6000 x 2500 mm"];
 var COD = {"3000 x 1500 mm":"31.5","4000 x 2000 mm":"42","6000 x 2000 mm":"62","6000 x 2500 mm":"62.5"};
 var MAT = ["Oțel carbon","Inox","Aluminiu","Alamă / cupru"];
@@ -62,6 +62,9 @@ function ore(h) { return (h < 10 ? fmt(h) : Math.round(h)) + " ore"; }
 var PV_CONS = {rez:[150,250,350,450,600,800,1000,1500], com:[1000,1500,2000,3000,5000,7500,10000], ind:[10000,15000,20000,30000,50000,75000,100000]};
 var PV_BAT = {rez:["Fără baterie","5 kWh","10 kWh","15 kWh","20 kWh","30 kWh"], com:["Fără baterie","20 kWh","30 kWh","50 kWh","100 kWh","200 kWh"],
   ind:["Fără baterie","100 kWh","200 kWh","500 kWh","1.000 kWh"]};
+var FORK_CAP = {d:["1,5 t","2 t","2,5 t","3 t","3,5 t","4 t","5 t"], g:["1,5 t","2 t","2,5 t","3 t","3,5 t","4 t"],
+  e4:["2 t","2,5 t","3 t","3,5 t","4 t","5 t"], e3:["1 t","1,5 t","2 t"], hd:["6 t","7 t","8 t","10 t","12 t"],
+  hdx:["13 t","16 t","20 t","25 t","28 t","32 t","45 t","55 t"], st:["1 t","1,5 t"]};
 function pvCons(A) { return parseInt((A.cons || "").replace(/\D/g, ""), 10) || 0; }
 function pv(A) { var c = pvCons(A); if (!c) return null; var n = Math.max(4, Math.ceil(c / 100 / 0.55)); return {n: n, kwp: n * 0.55}; }
 var T = [
@@ -160,7 +163,7 @@ var T = [
  {id:"genind", n:"Generator industrial", d:"Diesel trifazat, 22–2500 kVA, cu autonomie calculată", g:"gen_ind",
   variants:[
    v("st","Staționar, carcasă insonorizată","Fabrici, clădiri, alimentare de rezervă","gen_ind",{tag:"TOP"}),
-   v("mob","Mobil, pe remorcă","Șantiere, evenimente, lucrări în locații diferite","gen_ind")],
+   v("mob","Mobil, pe remorcă","Șantiere, evenimente, lucrări în locații diferite","gen_mob")],
   steps:[step("uz","Cum îl folosești?",{o:["Rezervă la căderea rețelei","Sursă principală (fără rețea)","Șantier / evenimente"]}),
    step("kva","Puterea maximă (kVA, standby)",{o:function (A) {
      // pe remorca: pana la 500 kVA
@@ -191,22 +194,23 @@ var T = [
   std:"Tensiune stabilă (inverter), sigură pentru electronice · Ieșire USB 5 V · Varianta 230 V / 50 Hz pentru România",
   ce:null,
   model:function (A) { return A.variant === "i35" ? "MLT INVERTER 3,5 kW" : "MLT INVERTER 6 kW"; }},
- {id:"fork", n:"Motostivuitor", d:"Diesel, electric sau GPL, 1,5–7 t", g:"forklift",
+ {id:"fork", n:"Motostivuitor / stivuitor", d:"Diesel, GPL, electric, 1–55 t", g:"forklift",
   variants:[
-   v("d","Diesel","Exterior, curți, șantiere, program lung","forklift",{tag:"TOP"}),
-   v("e","Electric","Hale și depozite, fără noxe, silențios","forklift"),
-   v("g","Benzină / GPL","Interior și exterior, cost mic de operare","forklift")],
-  steps:[step("cap","Capacitatea de ridicare",{o:["1,5 t","2 t","2,5 t","3 t","3,5 t","5 t","7 t"]}),
-   step("h","Înălțimea de ridicare",{o:["3 m (standard)","4 m","4,5 m","5 m","6 m"]}),
-   step("teren","Unde lucrează?",{o:["Interior – pardoseală","Exterior – asfalt / beton","Teren accidentat"]}),
+   v("d","Diesel","Exterior, curți, șantiere, program lung. 1,5–5 t","forklift_d",{tag:"TOP",specs:{"Motor":"Diesel, Euro III / Euro V / EPA"}}),
+   v("g","Benzină / GPL","Interior și exterior, cost mic de operare. 1,5–4 t","forklift_gpl",{specs:{"Motor":"Benzină / GPL"}}),
+   v("e4","Electric 4 roți","Hale și depozite, fără noxe, silențios. 2–5 t","forklift_e4",{specs:{"Acționare":"Motor AC, baterie litiu sau plumb-acid"}}),
+   v("e3","Electric 3 roți","Compact, rază mică de virare, spații înguste. 1–2 t","forklift_e3",{specs:{"Acționare":"Motor AC, baterie litiu sau plumb-acid"}}),
+   v("hd","Diesel greu","Containere, piatră, oțel. 6–12 t","forklift_hd",{specs:{"Motor":"Diesel"}}),
+   v("hdx","Diesel foarte greu","Porturi, cariere, oțelării. 13–55 t","forklift_hdx",{specs:{"Motor":"Diesel"}}),
+   v("st","Stivuitor electric de paleți","Pentru teren accidentat, cu operator pe jos. 1–1,5 t","forklift_st",{specs:{"Acționare":"Electrică"}})],
+  steps:[step("cap","Capacitatea de ridicare",{o:function (A) { return FORK_CAP[A.variant] || []; }}),
+   step("h","Înălțimea de ridicare",{not:"st", o:function (A) { return /^hd/.test(A.variant) ? ["3 m (standard)","4 m","5 m","6 m"] : ["3 m (standard)","4 m","4,5 m","5 m","6 m","7 m"]; }}),
+   step("teren","Unde lucrează?",{not:"st", o:["Interior – pardoseală","Exterior – asfalt / beton","Teren accidentat"]}),
    step("opt","Opțiuni",{multi:1, o:["Side-shift (deplasare laterală furci)","Poziționer furci","Catarg triplex cu ridicare liberă","Furci lungi",
     "Cabină închisă","Anvelope superelastice","Lumini de lucru + girofar"]})],
-  std:"Catarg duplex 3 m · Centru de sarcină 500 mm · Înclinare catarg 6° / 12°",
-  model:function (A) { return "MLT FORKLIFT " + ({d:"DIESEL", e:"ELECTRIC", g:"GPL"}[A.variant] || "") + " " + (A.cap || "").replace(" ", ""); },
-  extra:function (A) {
-   if (A.variant !== "d" || A.cap !== "3 t") return [];
-   return [["Viteză maximă (încărcat)","20 km/h"],["Viteză de ridicare","470 / 520 mm/s"],["Rază minimă de virare","2600 mm"],["Furci","1070 x 125 x 45 mm"],
-    ["Motor","39 kW, 4 cilindri, 2,67 l"],["Rezervor","70 l"],["Transmisie","automată"],["Greutate proprie","4250 kg"]]; },
+  std:"Contragreutate · Catarg duplex standard · Culori și siglă MLT",
+  model:function (A) { return "MLT " + ({d:"FORKLIFT DIESEL", g:"FORKLIFT GPL", e4:"FORKLIFT ELECTRIC", e3:"FORKLIFT ELECTRIC 3W", hd:"FORKLIFT DIESEL HD",
+    hdx:"FORKLIFT DIESEL XHD", st:"STACKER"}[A.variant] || "") + " " + (A.cap || "").replace(" ", ""); },
   link:function () { return "motostivuitor-395"; }},
  {id:"solar", n:"Sistem fotovoltaic", d:"Calculat după consumul tău: putere, panouri, baterie", g:"solar",
   variants:[
@@ -239,7 +243,7 @@ var BRAKES = [[50,1600,5.5,4000],[70,2500,7.9,6500],[100,3200,7.9,9300],[100,410
 function brakeLbl(b) { return (b[1] / 1000 + "").replace(".", ",") + " m / " + b[0] + " t"; }
 
 /* ================= LOGICA ================= */
-var st = {tip: null, i: -1, A: {}, frame: 1, group: "sheet_exchange_enclosed"};
+var st = {tip: null, i: -1, A: {}, frame: 1, group: "start"};
 function tip() { return T.filter(function (t) { return t.id === st.tip; })[0]; }
 function variant() { var t = tip(); return t && t.variants.filter(function (x) { return x.id === st.A.variant; })[0]; }
 function steps() {
@@ -310,7 +314,7 @@ var CSS = ""
 + ".vtop{display:flex;justify-content:space-between;gap:10px;padding:18px 26px 0;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:1px}.vtop b{color:var(--accent);font-weight:400}"
 + ".stage{position:relative;cursor:grab;user-select:none;touch-action:pan-y;display:grid;place-items:center;padding:10px 26px;height:420px;"
 + "background:radial-gradient(ellipse at 50% 60%,#e9ece4 0%,#cfd5c6 55%,#9aa38f 100%);margin:14px 26px 0;border:1px solid var(--line2);overflow:hidden}"
-+ ".stage:active{cursor:grabbing}.stage img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 18px 18px rgba(0,0,0,.25))}"
++ ".stage:active{cursor:grabbing}.stage img{width:100%;height:100%;min-height:0;object-fit:contain;filter:drop-shadow(0 18px 18px rgba(0,0,0,.25))}"
 + ".hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:#3b4630;background:rgba(255,255,255,.6);padding:4px 10px;letter-spacing:1px;white-space:nowrap}"
 + ".scan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;top:0}"
 + ".stage.swap .scan{animation:scan .7s ease-out}@keyframes scan{0%{top:0;opacity:.9}100%{top:100%;opacity:0}}"
@@ -350,6 +354,9 @@ var CSS = ""
 + ".lead input{background:var(--panel2);border:1px solid var(--line2);color:var(--text);padding:11px;font:inherit;font-size:14px;width:100%}"
 + ".lead input:focus{outline:none;border-color:var(--olive2)}.lead input.bad{border-color:#c0392b}"
 + ".ok{color:var(--accent);font-weight:600}"
++ ".grid.home{grid-template-columns:minmax(0,1fr)}.grid.home .viewer{display:none}.grid.home .opts{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:1fr}"
++ "@container (max-width:1050px){.grid.home .opts{grid-template-columns:repeat(3,minmax(0,1fr))}}"
++ "@container (max-width:760px){.grid.home .opts{grid-template-columns:repeat(2,minmax(0,1fr))}}"
 + "@container (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}.stage{height:300px}}"
 + "@container (max-width:560px){.wrap{padding:14px 12px 24px}.opts,.lead{grid-template-columns:1fr}.vname{font-size:22px}.status{display:none}"
 + ".vtop,.vname,.vcode{padding-left:14px;padding-right:14px}.stage{margin:12px 12px 0;padding:8px;height:240px}.thumbs{padding:10px 12px 16px}.panel{padding:16px}.hint{font-size:9px}}";
@@ -363,6 +370,8 @@ function viewer(anim) {
   var n = FRAMES[st.group], img = $("#mainImg"), t = tip(), v = variant();
   img.src = src(st.group, st.frame);
   $("#frameLbl").textContent = (st.frame < 10 ? "0" : "") + st.frame + "/" + (n < 10 ? "0" : "") + n;
+  // pe ecranul de start (colajul) nu e nimic de rotit
+  $(".hint").textContent = st.group === "start" ? "↓ ALEGE MAI JOS CE UTILAJ TE INTERESEAZĂ" : "⟲ TRAGE CU MOUSE-UL SAU DEGETUL PENTRU A ROTI";
   var h = ""; for (var i = 1; i <= n; i++) h += '<button class="' + (i === st.frame ? "on" : "") + '" data-f="' + i + '" aria-label="Unghi ' + i + '"><img src="' + src(st.group, i) + '" alt="" loading="lazy"></button>';
   $("#thumbs").innerHTML = h;
   if (anim) { var s = $("#stage"); s.classList.remove("swap"); void s.offsetWidth; s.classList.add("swap"); }
@@ -388,7 +397,7 @@ function card(attr, val, sel, inner, cls) { return '<button class="opt ' + (cls 
 function panel() {
   var p = $("#panel"), t = tip(), ss = steps();
   if (!t) {
-    p.innerHTML = head("Ce utilaj te interesează?", "Alege categoria. Imaginea mare se schimbă după alegere.")
+    p.innerHTML = head("Ce utilaj te interesează?", "Alege categoria de mai jos și configurezi utilajul pas cu pas.")
       + '<div class="opts">' + T.map(function (x, k) { return card("t", k, false, '<div class="pic"><img src="' + src(x.g, 1) + '" alt=""></div><span class="t">' + x.n + '</span><span class="d">' + x.d + "</span>"); }).join("") + "</div>";
     return;
   }
@@ -424,7 +433,11 @@ function panel() {
     + (t.link ? '<a class="btn" target="_blank" href="/cumpara/' + t.link(st.A) + '">Vezi utilajul</a>' : "")
     + '<a class="btn wa" data-send="wa" target="_blank" rel="noopener">WhatsApp</a><a class="btn go" data-send="call" href="#">Te sunăm noi</a><a class="btn" data-send="mail" title="' + MAIL + '">Email</a></span></div>';
 }
-function render() { panel(); viewer(); }
+function render() {
+  // pe ecranul de start nu e nimic de vizualizat: ramane doar lista de categorii, pe toata latimea
+  root.querySelector(".grid").classList.toggle("home", !st.tip);
+  panel(); viewer();
+}
 
 /* trimite cererea prin formularul de contact al site-ului, fara sa paraseasca pagina ([MLT-OK] = trece de filtrul Gmail) */
 function lead(msg, tel, name, cb) {
@@ -456,8 +469,8 @@ function onClick(e) {
     st.i++; return render();
   }
   if (d.act === "next") { st.i++; return render(); }
-  if (d.act === "back") { if (st.i >= 0) st.i--; else st.tip = null; if (!st.tip) setGroup("sheet_exchange_enclosed"); else if (st.i < 0) setGroup(tip().g); return render(); }
-  if (d.act === "home") { st.tip = null; st.i = -1; st.A = {}; setGroup("sheet_exchange_enclosed"); render(); host.scrollIntoView({behavior: "smooth", block: "start"}); return; }
+  if (d.act === "back") { if (st.i >= 0) st.i--; else st.tip = null; if (!st.tip) setGroup("start"); else if (st.i < 0) setGroup(tip().g); return render(); }
+  if (d.act === "home") { st.tip = null; st.i = -1; st.A = {}; setGroup("start"); render(); host.scrollIntoView({behavior: "smooth", block: "start"}); return; }
   if (d.send) {
     var f = $("#cf-t"), tel = f.value.trim(), n = $("#cf-n").value, l = $("#cf-l").value;
     var txt = "Bună ziua! Am configurat pe site un utilaj:\n" + rezumat().join("\n") + (tel ? "\nTelefon: " + tel : "") + (n ? "\nNume/firmă: " + n : "") + (l ? "\nLocalitate: " + l : "") + "\nVă rog să mă sunați cu oferta. Mulțumesc!";
