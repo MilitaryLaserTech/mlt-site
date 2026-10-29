@@ -16,7 +16,7 @@ var WA = "40730466920", MAIL = "contact@militarylasertech.com";
 
 /* ================= DATE ================= */
 var FRAMES = {sheet_open:7, sheet_enclosed:6, sheet_exchange_open:6, sheet_exchange_enclosed:6, platetube:6, platetube_exchange:6,
-  tube_2:5, tube_3:5, hbeam:7, cabinet:5, brake:6, robot:2};
+  tube_2:5, tube_3:5, hbeam:7, cabinet:5, brake:6, robot:2, gen_ind:1, gen_home:5, forklift:3, solar:1};
 var MESE = ["3000 x 1500 mm","4000 x 2000 mm","6000 x 2000 mm","6000 x 2500 mm"];
 var COD = {"3000 x 1500 mm":"31.5","4000 x 2000 mm":"42","6000 x 2000 mm":"62","6000 x 2500 mm":"62.5"};
 var MAT = ["Oțel carbon","Inox","Aluminiu","Alamă / cupru"];
@@ -44,6 +44,26 @@ var W_TH = step("gros", "Grosimea materialului", {o: ["0,5 - 2 mm","2 - 4 mm","4
 var W_KW = step("kw", "Puterea sursei", {o: ["1,5 kW","2 kW","3 kW",NUSTIU], rec: function (A) {
   var g = A.gros || ""; return /^0,5/.test(g) ? "1,5 kW" : /^2 -/.test(g) ? "2 kW" : g ? "3 kW" : null; }});
 
+// generatoare industriale: kVA standby -> [kVA prime, consum l/h la 100% si 50% sarcina, rezervor l, L x l x H mm, greutate kg] - din fisele tehnice ale furnizorului
+var GEN = {22:[20,4.8,2.6,92,"2000 x 900 x 1310",750], 25:[24.5,6.1,3.2,82,"1950 x 900 x 1337",720], 35:[32,7.6,4,101,"2300 x 1000 x 1545",830],
+  44:[40,9.3,4.6,132,"2300 x 1000 x 1715",925], 50:[45.4,10.4,5.2,132,"2300 x 1050 x 1715",945], 55:[50,11.9,6,101,"2300 x 1000 x 1545",930],
+  72:[65.5,14.5,7.7,180,"2600 x 1000 x 1535",1350], 90:[82,18.6,9.5,180,"2700 x 1050 x 1875",1400], 110:[100,23.2,11.9,275,"2600 x 1000 x 1545",1650],
+  150:[135,30.2,15.9,275,"3220 x 1100 x 1845",1820], 165:[150,32.7,16.7,280,"3220 x 1100 x 1845",1950], 220:[200,43.1,22.4,415,"3600 x 1200 x 2480",2470],
+  250:[227.2,50.9,25.9,585,"3820 x 1150 x 2460",2250], 275:[250,56.9,28.4,585,"3820 x 1150 x 2460",2250], 300:[273,58.8,32.6,585,"3700 x 1400 x 2650",2690],
+  350:[318.2,70.5,35.3,585,"3700 x 1400 x 2650",2700], 400:[363.6,85,43.1,890,"3700 x 1400 x 2650",3350], 500:[454.5,112.9,52,1145,"4400 x 1600 x 2650",4100],
+  550:[500,104.9,53.6,1145,"4400 x 1600 x 2650",4350], 660:[600,126.5,63.6,1530,"4500 x 1800 x 3075",4950], 715:[650,135.1,66.4,1530,"5300 x 1800 x 3000",5600],
+  750:[681.8,135.1,66.4,1530,"4500 x 1800 x 3000",5600], 825:[750,150.1,72.5,2000,"5300 x 1800 x 3000",7500], 900:[818.2,172.5,91,2000,"4950 x 2000 x 3425",7800],
+  1120:[1018,205,105.7,2000,"4950 x 2000 x 3425",8250], 1250:[1136.3,198.4,100.3,2000,"5450 x 2400 x 3470",9035], 1400:[1250,217.6,108.9,2000,"5450 x 2400 x 3470",9120],
+  1650:[1500,324,156,2275,"5450 x 2400 x 3470",11760], 1700:[1545.5,327.5,166.7,2275,"5450 x 2400 x 3470",11760], 2000:[1830,401,194.7,3000,"8000 x 2800 x 3150",18700],
+  2500:[2250,466.4,240.5,0,"",0]};
+function fmt(x) { return (Math.round(x * 10) / 10 + "").replace(".", ","); }
+function ore(h) { return (h < 10 ? fmt(h) : Math.round(h)) + " ore"; }
+// fotovoltaic: aprox. 100 kWh pe luna pentru fiecare kWp instalat in Romania (1.200 kWh/kWp pe an), panouri de 550 W
+var PV_CONS = {rez:[150,250,350,450,600,800,1000,1500], com:[1000,1500,2000,3000,5000,7500,10000], ind:[10000,15000,20000,30000,50000,75000,100000]};
+var PV_BAT = {rez:["Fără baterie","5 kWh","10 kWh","15 kWh","20 kWh","30 kWh"], com:["Fără baterie","20 kWh","30 kWh","50 kWh","100 kWh","200 kWh"],
+  ind:["Fără baterie","100 kWh","200 kWh","500 kWh","1.000 kWh"]};
+function pvCons(A) { return parseInt((A.cons || "").replace(/\D/g, ""), 10) || 0; }
+function pv(A) { var c = pvCons(A); if (!c) return null; var n = Math.max(4, Math.ceil(c / 100 / 0.55)); return {n: n, kwp: n * 0.55}; }
 var T = [
  {id:"sheet", n:"Tăiere laser tablă", d:"Tablă oțel, inox, aluminiu, alamă", g:"sheet_open", rover:1,
   variants:[
@@ -136,7 +156,82 @@ var T = [
   steps:[step("masa","Dimensiunea de lucru",{o:["14000 x 3200 mm","26000 x 2500 mm","26000 x 3200 mm"]}), S_MAT, S_TH, S_KW,
    step("opt","Opțiuni",{multi:1, o:["Alimentare semi-automată","Construcție în consolă (pe o parte)"].concat(EXTRA_LASER)})],
   std:"Cap 3D pentru teșire · Sursă Raycus · Structură portal",
-  model:function (A) { return "MLT 3D H-BEAM 7 axe " + (A.masa || "").replace(" mm", ""); }}
+  model:function (A) { return "MLT 3D H-BEAM 7 axe " + (A.masa || "").replace(" mm", ""); }},
+ {id:"genind", n:"Generator industrial", d:"Diesel trifazat, 22–2500 kVA, cu autonomie calculată", g:"gen_ind",
+  variants:[
+   v("st","Staționar, carcasă insonorizată","Fabrici, clădiri, alimentare de rezervă","gen_ind",{tag:"TOP"}),
+   v("mob","Mobil, pe remorcă","Șantiere, evenimente, lucrări în locații diferite","gen_ind")],
+  steps:[step("uz","Cum îl folosești?",{o:["Rezervă la căderea rețelei","Sursă principală (fără rețea)","Șantier / evenimente"]}),
+   step("kva","Puterea maximă (kVA, standby)",{o:function (A) {
+     // pe remorca: pana la 500 kVA
+     return Object.keys(GEN).filter(function (k) { return A.variant !== "mob" || +k <= 500; }).map(function (k) { return k + " kVA"; }).concat([NUSTIU]); }}),
+   step("ats","Pornire",{o:["Automată la căderea rețelei (ATS)","Manuală / din panou"], rec:function (A) { return /^Rezervă/.test(A.uz || "") ? "Automată la căderea rețelei (ATS)" : null; }}),
+   step("opt","Opțiuni",{multi:1, o:["Rezervor extins (autonomie mai mare)","Monitorizare la distanță (GSM / internet)","Încălzitor motor pentru iarnă",
+    "Tablou de comutare și cablare","Contract de mentenanță","Instalare + punere în funcțiune"]})],
+  std:"Motor diesel răcit cu apă · Alternator clasa H · Controller digital cu protecții · 400/230 V, 50 Hz, cos φ 0,8",
+  ce:"CE · ISO 9001 / 14001",
+  model:function (A) { var k = parseFloat(A.kva || ""); return "MLT POWER " + (k ? k + " kVA" : "(la cerere)") + (A.variant === "mob" ? " MOBIL" : ""); },
+  extra:function (A) {
+   var k = parseFloat(A.kva || ""), g = GEN[k]; if (!g) return [];
+   var r = [["Putere continuă (prime)", fmt(g[0]) + " kVA / " + fmt(g[0] * 0.8) + " kW"], ["Putere maximă (standby)", k + " kVA / " + fmt(k * 0.8) + " kW"],
+    ["Consum la 100% / 50% sarcină", fmt(g[1]) + " / " + fmt(g[2]) + " l/h"]];
+   if (g[3]) r.push(["Rezervor", g[3].toLocaleString("ro-RO") + " l"], ["Autonomie la 75% sarcină", ore(g[3] / ((g[1] + g[2]) / 2))], ["Autonomie la 50% sarcină", ore(g[3] / g[2])]);
+   else r.push(["Rezervor", "extern, dimensionat la cerere"]);
+   if (g[4]) r.push(["Dimensiuni (L x l x H)", g[4] + " mm"], ["Greutate fără combustibil", g[5].toLocaleString("ro-RO") + " kg"]);
+   return r; },
+  link:function () { return "generatoare-396"; }},
+ {id:"genhome", n:"Generator pentru casă", d:"Inverter pe benzină, silențios, 3,5–6 kW", g:"gen_home",
+  variants:[
+   v("i35","Inverter 3,5 kW – portabil","Cu mâner, 21,5 kg. Rulotă, camping, consumatori mici","gen_home",{
+     specs:{"Putere nominală / maximă":"3,2 / 3,5 kW","Rezervor":"3,7 l","Zgomot":"62 dB (la 7 m, 25% sarcină)","Motor":"145 cmc, 4 timpi","Pornire":"Manuală (demaror cu sfoară)","Greutate":"21,5 kg","Dimensiuni ambalaj":"510 x 320 x 475 mm"}}),
+   v("i6","Inverter 6 kW – pe roți","Roți și mâner telescopic, pornire electrică și cu telecomandă","gen_home",{tag:"TOP",
+     specs:{"Putere nominală / maximă":"5,5 / 6 kW","Rezervor":"13,5 l","Zgomot":"62 dB (la 7 m, 25% sarcină)","Motor":"312 cmc, 4 timpi","Pornire":"Manuală, electrică și cu telecomandă","Greutate":"52 kg","Dimensiuni ambalaj":"720 x 575 x 605 mm"}})],
+  steps:[step("ce","Ce vrei să alimentezi?",{multi:1, o:["Frigider / congelator","Centrală termică","Pompă de apă","Iluminat, TV, internet","Scule electrice","Rulotă / camping"]}),
+   step("opt","Opțiuni",{multi:1, o:["Kit de cuplare în paralel (2 generatoare)","Comutator manual rețea / generator","Husă de protecție","Ulei + kit de întreținere"]})],
+  std:"Tensiune stabilă (inverter), sigură pentru electronice · Ieșire USB 5 V · Varianta 230 V / 50 Hz pentru România",
+  ce:null,
+  model:function (A) { return A.variant === "i35" ? "MLT INVERTER 3,5 kW" : "MLT INVERTER 6 kW"; }},
+ {id:"fork", n:"Motostivuitor", d:"Diesel, electric sau GPL, 1,5–7 t", g:"forklift",
+  variants:[
+   v("d","Diesel","Exterior, curți, șantiere, program lung","forklift",{tag:"TOP"}),
+   v("e","Electric","Hale și depozite, fără noxe, silențios","forklift"),
+   v("g","Benzină / GPL","Interior și exterior, cost mic de operare","forklift")],
+  steps:[step("cap","Capacitatea de ridicare",{o:["1,5 t","2 t","2,5 t","3 t","3,5 t","5 t","7 t"]}),
+   step("h","Înălțimea de ridicare",{o:["3 m (standard)","4 m","4,5 m","5 m","6 m"]}),
+   step("teren","Unde lucrează?",{o:["Interior – pardoseală","Exterior – asfalt / beton","Teren accidentat"]}),
+   step("opt","Opțiuni",{multi:1, o:["Side-shift (deplasare laterală furci)","Poziționer furci","Catarg triplex cu ridicare liberă","Furci lungi",
+    "Cabină închisă","Anvelope superelastice","Lumini de lucru + girofar"]})],
+  std:"Catarg duplex 3 m · Centru de sarcină 500 mm · Înclinare catarg 6° / 12°",
+  model:function (A) { return "MLT FORKLIFT " + ({d:"DIESEL", e:"ELECTRIC", g:"GPL"}[A.variant] || "") + " " + (A.cap || "").replace(" ", ""); },
+  extra:function (A) {
+   if (A.variant !== "d" || A.cap !== "3 t") return [];
+   return [["Viteză maximă (încărcat)","20 km/h"],["Viteză de ridicare","470 / 520 mm/s"],["Rază minimă de virare","2600 mm"],["Furci","1070 x 125 x 45 mm"],
+    ["Motor","39 kW, 4 cilindri, 2,67 l"],["Rezervor","70 l"],["Transmisie","automată"],["Greutate proprie","4250 kg"]]; },
+  link:function () { return "motostivuitor-395"; }},
+ {id:"solar", n:"Sistem fotovoltaic", d:"Calculat după consumul tău: putere, panouri, baterie", g:"solar",
+  variants:[
+   v("rez","Rezidențial","Casă: 150–1.500 kWh pe lună","solar",{tag:"TOP"}),
+   v("com","Comercial","Firme, birouri, ateliere: 1.000–10.000 kWh pe lună","solar"),
+   v("ind","Industrial","Hale și fabrici: peste 10.000 kWh pe lună","solar")],
+  steps:[step("cons","Consumul lunar (din factură)",{o:function (A) {
+     return (PV_CONS[A.variant] || []).map(function (x) { return x.toLocaleString("ro-RO") + " kWh"; }).concat([NUSTIU]); }}),
+   step("bran","Branșament",{o:["Monofazic","Trifazic"], rec:function (A) { var p = pv(A); return p ? (p.kwp > 10 ? "Trifazic" : "Monofazic") : null; }}),
+   step("bat","Baterie de stocare",{o:function (A) { return PV_BAT[A.variant] || []; }, rec:function (A) {
+     var c = pvCons(A), o = PV_BAT[A.variant] || [], best = null, d = 1e9; if (!c) return null;
+     o.forEach(function (x) { var k = parseFloat(x.replace(".", "")); if (k && Math.abs(k - c / 30 / 2) < d) { d = Math.abs(k - c / 30 / 2); best = x; } });
+     return best; }}),
+   step("mont","Tip montaj",{o:["Acoperiș țiglă","Acoperiș tablă / metal","Terasă","Pe sol"]}),
+   step("opt","Opțiuni",{multi:1, o:["Backup la pană de curent (EPS)","Monitorizare din aplicație","Stație de încărcare mașină electrică",
+    "Dosar prosumator + racordare","Instalare la cheie"]})],
+  std:"Panouri monocristaline N-type 550 W · Invertor hibrid · Structură de montaj · Protecții AC / DC",
+  ce:"CE",
+  model:function (A) { var p = pv(A); return "MLT SOLAR " + (p ? fmt(p.kwp) + " kWp" : "(la cerere)") + (A.bat && !/^Fără/.test(A.bat) ? " + " + A.bat : ""); },
+  extra:function (A) {
+   var p = pv(A); if (!p) return [];
+   return [["Putere sistem", fmt(p.kwp) + " kWp"], ["Panouri", p.n + " x 550 W"], ["Suprafață necesară", "aprox. " + Math.round(p.n * 2.6) + " m²"],
+    ["Producție estimată", "aprox. " + Math.round(p.kwp * 100).toLocaleString("ro-RO") + " kWh / lună · " + Math.round(p.kwp * 1200).toLocaleString("ro-RO") + " kWh / an"],
+    ["Invertor recomandat", "aprox. " + Math.max(3, Math.round(p.kwp / 1.1)) + " kW"]]; },
+  link:function () { return "panouri-fotovoltaice-394"; }}
 ];
 // abkant: forta (t), lungime (mm), motor (kW), greutate (kg) - din fisa tehnica
 var BRAKES = [[50,1600,5.5,4000],[70,2500,7.9,6500],[100,3200,7.9,9300],[100,4100,7.9,11000],[160,4100,11,13800],
@@ -176,6 +271,7 @@ function options(s) {
     }).concat([NUSTIU]);
   }
   if (s.brake) return BRAKES.map(brakeLbl).concat(["Altă dimensiune - la cerere"]);
+  if (typeof s.o === "function") return s.o(st.A);
   // varianta deschisa nu are cabina, video sau masa de schimb
   if (s.k === "opt" && t.rover && !armored()) return s.o.filter(function (x) { return !/cabin|video|schimb/i.test(x); });
   return s.o;
@@ -315,11 +411,12 @@ function panel() {
   rezumat().slice(2).forEach(function (l) { var x = l.split(": "); rows.push([x[0], x.slice(1).join(": ")]); });
   if (t.id === "brake") { var b = BRAKES.filter(function (x) { return brakeLbl(x) === (st.A.lung || ""); })[0];
     if (b) rows.push(["Motor principal", b[2] + " kW"], ["Greutate", b[3].toLocaleString("ro-RO") + " kg"]); }
+  if (t.extra) t.extra(st.A).forEach(function (x) { rows.push(x); });
   Object.keys(v.specs || {}).forEach(function (k) { rows.push([k, v.specs[k]]); });
   if (t.std && st.A.variant !== "mlc") rows.push(["Configurație standard", t.std]);
-  rows.push(["Certificare", CE]);
+  if (t.ce !== null) rows.push(["Certificare", t.ce || CE]);
   p.innerHTML = progress(ss.length + 2) + '<div class="stepno">CONFIGURAȚIE FINALIZATĂ</div><h2>Configurația ta</h2>'
-    + '<div class="sheet"><div class="stamp">CE CERTIFIED</div><h3>MODEL RECOMANDAT</h3><div class="code">' + esc(model()) + "</div>"
+    + '<div class="sheet">' + (t.ce !== null ? '<div class="stamp">CE CERTIFIED</div>' : "") + '<h3>MODEL RECOMANDAT</h3><div class="code">' + esc(model()) + "</div>"
     + '<div class="rows">' + rows.map(function (x) { return "<div>" + esc(x[0]) + "</div><div>" + esc(x[1]) + "</div>"; }).join("") + "</div>"
     + '<div class="note">Toate utilajele se configurează la comandă. Recomandarea e orientativă - confirmăm configurația exactă împreună.</div></div>'
     + '<div class="lead"><input id="cf-t" type="tel" placeholder="Telefon (pentru Te sunăm)"><input id="cf-n" placeholder="Nume și firmă"><input id="cf-l" placeholder="Localitate"></div>'
