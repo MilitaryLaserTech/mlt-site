@@ -162,7 +162,7 @@ var T = [
     "Stabilizator de tensiune + protecție la suprasarcină","Instalare + training la sediu"]})],
   model:function (A) { return "bendIT dbE it " + (!A.lung ? "…" : /^Altă/.test(A.lung) ? "(la cerere)" : A.lung.replace(/ m \/ /, "-").replace(" t", "")); },
   link:function () { return "abkant-393"; }},
- {id:"hbeam", n:"debitare heavy / H-beam 3D", d:"Grinzi H, profile mari, 7 axe. La cerere", g:"hbeam",
+ {id:"hbeam", n:"Debitare heavy / H-beam 3D", d:"Grinzi H, profile mari, 7 axe. La cerere", g:"hbeam",
   variants:[v("h7","3D 7 axe","Teșire și tăiere 3D pe grinzi H, U, I","hbeam",{specs:{"Viteză tăiere":"80 m/min","Precizie poziționare":"±0.15 mm","Grosime":"0–50 mm"}})],
   steps:[step("masa","Dimensiunea de lucru",{o:["14000 x 3200 mm","26000 x 2500 mm","26000 x 3200 mm"]}), S_MAT, S_TH, S_KW,
    step("opt","Opțiuni",{multi:1, o:["Alimentare semi-automată","Construcție în consolă (pe o parte)"].concat(EXTRA_LASER)})],
