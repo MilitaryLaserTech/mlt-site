@@ -16,7 +16,7 @@ var WA = "40730466920", MAIL = "contact@militarylasertech.com";
 
 /* ================= DATE ================= */
 var FRAMES = {sheet_open:7, sheet_enclosed:6, sheet_exchange_open:6, sheet_exchange_enclosed:6, platetube:6, platetube_exchange:6,
-  tube_2:5, tube_3:5, hbeam:7, cabinet:5, brake:6, robot:2, gen_ind:6, gen_mob:4, gen_home:5, forklift:6, forklift_d:1, forklift_gpl:1, forklift_e3:1, forklift_e4:1, forklift_hd:1, forklift_hdx:2, forklift_st:1, solar:1, start:1};
+  tube_2:5, tube_3:5, hbeam:7, cabinet:5, brake:7, robot:2, gen_ind:6, gen_mob:2, gen_home:5, forklift:6, forklift_d:1, forklift_gpl:1, forklift_e3:1, forklift_e4:1, forklift_hd:1, forklift_hdx:2, forklift_st:1, solar:1, ups:1, start:1};
 var MESE = ["3000 x 1500 mm","4000 x 2000 mm","6000 x 2000 mm","6000 x 2500 mm"];
 var COD = {"3000 x 1500 mm":"31.5","4000 x 2000 mm":"42","6000 x 2000 mm":"62","6000 x 2500 mm":"62.5"};
 var MAT = ["Oțel carbon","Inox","Aluminiu","Alamă / cupru"];
@@ -56,6 +56,14 @@ var GEN = {22:[20,4.8,2.6,92,"2000 x 900 x 1310",750], 25:[24.5,6.1,3.2,82,"1950
   1120:[1018,205,105.7,2000,"4950 x 2000 x 3425",8250], 1250:[1136.3,198.4,100.3,2000,"5450 x 2400 x 3470",9035], 1400:[1250,217.6,108.9,2000,"5450 x 2400 x 3470",9120],
   1650:[1500,324,156,2275,"5450 x 2400 x 3470",11760], 1700:[1545.5,327.5,166.7,2275,"5450 x 2400 x 3470",11760], 2000:[1830,401,194.7,3000,"8000 x 2800 x 3150",18700],
   2500:[2250,466.4,240.5,0,"",0]};
+var UPS_KVA = [10,15,20,30,40,45,60,80,100,120,160,200,250];
+function isGenInd(A) { return A.variant === "ind"; }
+function isMob(A) { return /remorcă/.test(A.exec || ""); }
+// generatoare pentru casa: puteri disponibile si fisele tehnice cunoscute (de la furnizor)
+var HOME_PW = ["1 kW","2 kW","3 kW","3,5 kW","6 kW","8 kW"];
+var HOME_SPEC = {"3,5 kW":{"Putere nominală / maximă":"3,2 / 3,5 kW","Rezervor":"3,7 l","Zgomot":"62 dB (la 7 m, 25% sarcină)","Motor":"145 cmc, 4 timpi","Pornire":"Manuală (demaror cu sfoară)","Greutate":"21,5 kg","Dimensiuni ambalaj":"510 x 320 x 475 mm"},
+  "6 kW":{"Putere nominală / maximă":"5,5 / 6 kW","Rezervor":"13,5 l","Zgomot":"62 dB (la 7 m, 25% sarcină)","Motor":"312 cmc, 4 timpi","Pornire":"Manuală, electrică și cu telecomandă","Greutate":"52 kg","Dimensiuni ambalaj":"720 x 575 x 605 mm"},
+  "8 kW":{"Combustibil":"Benzină sau GPL (dual fuel)","Pornire":"Cu telecomandă"}};
 function fmt(x) { return (Math.round(x * 10) / 10 + "").replace(".", ","); }
 function ore(h) { return (h < 10 ? fmt(h) : Math.round(h)) + " ore"; }
 // fotovoltaic: aprox. 100 kWh pe luna pentru fiecare kWp instalat in Romania (1.200 kWh/kWp pe an), panouri de 550 W
@@ -160,21 +168,30 @@ var T = [
    step("opt","Opțiuni",{multi:1, o:["Alimentare semi-automată","Construcție în consolă (pe o parte)"].concat(EXTRA_LASER)})],
   std:"Cap 3D pentru teșire · Sursă Raycus · Structură portal",
   model:function (A) { return "MLT 3D H-BEAM 7 axe " + (A.masa || "").replace(" mm", ""); }},
- {id:"genind", n:"Generator industrial", d:"Diesel trifazat, 22–2500 kVA, cu autonomie calculată", g:"gen_ind",
+ {id:"gen", n:"Generatoare", d:"Pentru casă (inverter) și industriale (diesel 22–2500 kVA)", g:"gen_ind",
   variants:[
-   v("st","Staționar, carcasă insonorizată","Fabrici, clădiri, alimentare de rezervă","gen_ind",{tag:"TOP"}),
-   v("mob","Mobil, pe remorcă","Șantiere, evenimente, lucrări în locații diferite","gen_mob")],
-  steps:[step("uz","Cum îl folosești?",{o:["Rezervă la căderea rețelei","Sursă principală (fără rețea)","Șantier / evenimente"]}),
-   step("kva","Puterea maximă (kVA, standby)",{o:function (A) {
+   v("home","Pentru casă","Inverter pe benzină, silențios, sigur pentru electronice. 1–8 kW","gen_home"),
+   v("ind","Industrial","Diesel trifazat, staționar insonorizat sau pe remorcă. 22–2500 kVA","gen_ind",{tag:"TOP"})],
+  steps:[step("pw","Puterea",{only:"home", o:HOME_PW}),
+   step("ce","Ce vrei să alimentezi?",{only:"home", multi:1, o:["Frigider / congelator","Centrală termică","Pompă de apă","Iluminat, TV, internet","Scule electrice","Rulotă / camping"]}),
+   step("opth","Opțiuni",{only:"home", multi:1, o:["Kit de cuplare în paralel (2 generatoare)","Comutator manual rețea / generator","Husă de protecție","Ulei + kit de întreținere"]}),
+   step("exec","Execuție",{only:"ind", o:["Staționar, carcasă insonorizată","Mobil, pe remorcă"], img:{"Staționar, carcasă insonorizată":"gen_ind","Mobil, pe remorcă":"gen_mob"}}),
+   step("uz","Cum îl folosești?",{only:"ind", o:["Rezervă la căderea rețelei","Sursă principală (fără rețea)","Șantier / evenimente"]}),
+   step("kva","Puterea maximă (kVA, standby)",{only:"ind", o:function (A) {
      // pe remorca: pana la 500 kVA
-     return Object.keys(GEN).filter(function (k) { return A.variant !== "mob" || +k <= 500; }).map(function (k) { return k + " kVA"; }).concat([NUSTIU]); }}),
-   step("ats","Pornire",{o:["Automată la căderea rețelei (ATS)","Manuală / din panou"], rec:function (A) { return /^Rezervă/.test(A.uz || "") ? "Automată la căderea rețelei (ATS)" : null; }}),
-   step("opt","Opțiuni",{multi:1, o:["Rezervor extins (autonomie mai mare)","Monitorizare la distanță (GSM / internet)","Încălzitor motor pentru iarnă",
+     return Object.keys(GEN).filter(function (k) { return !isMob(A) || +k <= 500; }).map(function (k) { return k + " kVA"; }).concat([NUSTIU]); }}),
+   step("ats","Pornire",{only:"ind", o:["Automată la căderea rețelei (ATS)","Manuală / din panou"], rec:function (A) { return /^Rezervă/.test(A.uz || "") ? "Automată la căderea rețelei (ATS)" : null; }}),
+   step("opt","Opțiuni",{only:"ind", multi:1, o:["Rezervor extins (autonomie mai mare)","Monitorizare la distanță (GSM / internet)","Încălzitor motor pentru iarnă",
     "Tablou de comutare și cablare","Contract de mentenanță","Instalare + punere în funcțiune"]})],
-  std:"Motor diesel răcit cu apă · Alternator clasa H · Controller digital cu protecții · 400/230 V, 50 Hz, cos φ 0,8",
-  ce:"CE · ISO 9001 / 14001",
-  model:function (A) { var k = parseFloat(A.kva || ""); return "MLT POWER " + (k ? k + " kVA" : "(la cerere)") + (A.variant === "mob" ? " MOBIL" : ""); },
+  std:function (A) { return isGenInd(A) ? "Motor diesel răcit cu apă · Alternator clasa H · Controller digital cu protecții · 400/230 V, 50 Hz, cos φ 0,8"
+    : "Tensiune stabilă (inverter), sigură pentru electronice · Ieșire USB 5 V · Varianta 230 V / 50 Hz pentru România"; },
+  ce:function (A) { return isGenInd(A) ? "CE · ISO 9001 / 14001" : null; },
+  model:function (A) {
+   if (!isGenInd(A)) return "MLT INVERTER " + (A.pw || "");
+   var k = parseFloat(A.kva || ""); return "MLT POWER " + (k ? k + " kVA" : "(la cerere)") + (isMob(A) ? " MOBIL" : ""); },
   extra:function (A) {
+   if (!isGenInd(A)) { var hs = HOME_SPEC[A.pw]; return hs ? Object.keys(hs).map(function (k) { return [k, hs[k]]; }) : []; }
+
    var k = parseFloat(A.kva || ""), g = GEN[k]; if (!g) return [];
    var r = [["Putere continuă (prime)", fmt(g[0]) + " kVA / " + fmt(g[0] * 0.8) + " kW"], ["Putere maximă (standby)", k + " kVA / " + fmt(k * 0.8) + " kW"],
     ["Consum la 100% / 50% sarcină", fmt(g[1]) + " / " + fmt(g[2]) + " l/h"]];
@@ -182,18 +199,7 @@ var T = [
    else r.push(["Rezervor", "extern, dimensionat la cerere"]);
    if (g[4]) r.push(["Dimensiuni (L x l x H)", g[4] + " mm"], ["Greutate fără combustibil", g[5].toLocaleString("ro-RO") + " kg"]);
    return r; },
-  link:function () { return "generatoare-396"; }},
- {id:"genhome", n:"Generator pentru casă", d:"Inverter pe benzină, silențios, 3,5–6 kW", g:"gen_home",
-  variants:[
-   v("i35","Inverter 3,5 kW – portabil","Cu mâner, 21,5 kg. Rulotă, camping, consumatori mici","gen_home",{
-     specs:{"Putere nominală / maximă":"3,2 / 3,5 kW","Rezervor":"3,7 l","Zgomot":"62 dB (la 7 m, 25% sarcină)","Motor":"145 cmc, 4 timpi","Pornire":"Manuală (demaror cu sfoară)","Greutate":"21,5 kg","Dimensiuni ambalaj":"510 x 320 x 475 mm"}}),
-   v("i6","Inverter 6 kW – pe roți","Roți și mâner telescopic, pornire electrică și cu telecomandă","gen_home",{tag:"TOP",
-     specs:{"Putere nominală / maximă":"5,5 / 6 kW","Rezervor":"13,5 l","Zgomot":"62 dB (la 7 m, 25% sarcină)","Motor":"312 cmc, 4 timpi","Pornire":"Manuală, electrică și cu telecomandă","Greutate":"52 kg","Dimensiuni ambalaj":"720 x 575 x 605 mm"}})],
-  steps:[step("ce","Ce vrei să alimentezi?",{multi:1, o:["Frigider / congelator","Centrală termică","Pompă de apă","Iluminat, TV, internet","Scule electrice","Rulotă / camping"]}),
-   step("opt","Opțiuni",{multi:1, o:["Kit de cuplare în paralel (2 generatoare)","Comutator manual rețea / generator","Husă de protecție","Ulei + kit de întreținere"]})],
-  std:"Tensiune stabilă (inverter), sigură pentru electronice · Ieșire USB 5 V · Varianta 230 V / 50 Hz pentru România",
-  ce:null,
-  model:function (A) { return A.variant === "i35" ? "MLT INVERTER 3,5 kW" : "MLT INVERTER 6 kW"; }},
+  link:function (A) { return isGenInd(A) ? "generatoare-396" : null; }},
  {id:"fork", n:"Motostivuitor / stivuitor", d:"Diesel, GPL, electric, 1–55 t", g:"forklift",
   variants:[
    v("d","Diesel","Exterior, curți, șantiere, program lung. 1,5–5 t","forklift_d",{tag:"TOP",specs:{"Motor":"Diesel, Euro III / Euro V / EPA"}}),
@@ -235,7 +241,19 @@ var T = [
    return [["Putere sistem", fmt(p.kwp) + " kWp"], ["Panouri", p.n + " x 550 W"], ["Suprafață necesară", "aprox. " + Math.round(p.n * 2.6) + " m²"],
     ["Producție estimată", "aprox. " + Math.round(p.kwp * 100).toLocaleString("ro-RO") + " kWh / lună · " + Math.round(p.kwp * 1200).toLocaleString("ro-RO") + " kWh / an"],
     ["Invertor recomandat", "aprox. " + Math.max(3, Math.round(p.kwp / 1.1)) + " kW"]]; },
-  link:function () { return "panouri-fotovoltaice-394"; }}
+  link:function () { return "panouri-fotovoltaice-394"; }},
+ {id:"ups", n:"UPS – stocare energie", d:"UPS online cu dublă conversie, 10–250 kVA", g:"ups",
+  variants:[
+   v("t3","Trifazat (intrare și ieșire 3/3)","Hale, utilaje CNC și laser, servere mari. 10–250 kVA","ups",{tag:"TOP"}),
+   v("t1","Trifazat → monofazat (3/1)","Birouri, servere, consumatori monofazați. 20 kVA","ups")],
+  steps:[step("kva","Puterea UPS-ului",{o:function (A) { return A.variant === "t1" ? ["20 kVA"] : UPS_KVA.map(function (k) { return k + " kVA"; }).concat([NUSTIU]); }}),
+   step("apl","Ce protejezi?",{multi:1, o:["Utilaje CNC / laser","Servere și rețea IT","Clădiri, iluminat de siguranță","Echipamente medicale","Linii de producție"]}),
+   step("aut","Autonomie dorită pe baterii",{o:["Standard (baterii interne)","15 minute","30 minute","60 minute","Peste 1 oră (baterii externe)"]}),
+   step("opt","Opțiuni",{multi:1, o:["Baterii externe suplimentare","Bypass de mentenanță","Monitorizare în rețea (SNMP)","Funcționare în paralel (redundanță)",
+    "Cuplare cu generator / fotovoltaic","Instalare + punere în funcțiune"]})],
+  std:"UPS online cu dublă conversie · Display LCD · Protecție la suprasarcină și scurtcircuit · Bypass automat",
+  ce:"CE",
+  model:function (A) { return "MLT UPS " + (A.variant === "t1" ? "3/1 " : "3/3 ") + (parseFloat(A.kva || "") ? parseFloat(A.kva) + " kVA" : "(la cerere)"); }}
 ];
 // abkant: forta (t), lungime (mm), motor (kW), greutate (kg) - din fisa tehnica
 var BRAKES = [[50,1600,5.5,4000],[70,2500,7.9,6500],[100,3200,7.9,9300],[100,4100,7.9,11000],[160,4100,11,13800],
@@ -248,7 +266,8 @@ function tip() { return T.filter(function (t) { return t.id === st.tip; })[0]; }
 function variant() { var t = tip(); return t && t.variants.filter(function (x) { return x.id === st.A.variant; })[0]; }
 function steps() {
   var t = tip(); if (!t) return [];
-  return t.steps.filter(function (s) { return (!s.only || s.only === st.A.variant) && (!s.not || s.not !== st.A.variant); });
+  function on(x) { return [].concat(x).indexOf(st.A.variant) > -1; }
+  return t.steps.filter(function (s) { return (!s.only || on(s.only)) && (!s.not || !on(s.not)); });
 }
 function armored() { return st.A.variant === "arm"; }
 function kwTxt(w) { return (w / 1000 + "").replace(".", ",") + " kW"; }
@@ -422,15 +441,16 @@ function panel() {
     if (b) rows.push(["Motor principal", b[2] + " kW"], ["Greutate", b[3].toLocaleString("ro-RO") + " kg"]); }
   if (t.extra) t.extra(st.A).forEach(function (x) { rows.push(x); });
   Object.keys(v.specs || {}).forEach(function (k) { rows.push([k, v.specs[k]]); });
-  if (t.std && st.A.variant !== "mlc") rows.push(["Configurație standard", t.std]);
-  if (t.ce !== null) rows.push(["Certificare", t.ce || CE]);
+  var std = typeof t.std === "function" ? t.std(st.A) : t.std, ce = typeof t.ce === "function" ? t.ce(st.A) : t.ce, lnk = t.link && t.link(st.A);
+  if (std && st.A.variant !== "mlc") rows.push(["Configurație standard", std]);
+  if (ce !== null) rows.push(["Certificare", ce || CE]);
   p.innerHTML = progress(ss.length + 2) + '<div class="stepno">CONFIGURAȚIE FINALIZATĂ</div><h2>Configurația ta</h2>'
-    + '<div class="sheet">' + (t.ce !== null ? '<div class="stamp">CE CERTIFIED</div>' : "") + '<h3>MODEL RECOMANDAT</h3><div class="code">' + esc(model()) + "</div>"
+    + '<div class="sheet">' + (ce !== null ? '<div class="stamp">CE CERTIFIED</div>' : "") + '<h3>MODEL RECOMANDAT</h3><div class="code">' + esc(model()) + "</div>"
     + '<div class="rows">' + rows.map(function (x) { return "<div>" + esc(x[0]) + "</div><div>" + esc(x[1]) + "</div>"; }).join("") + "</div>"
     + '<div class="note">Toate utilajele se configurează la comandă. Recomandarea e orientativă - confirmăm configurația exactă împreună.</div></div>'
     + '<div class="lead"><input id="cf-t" type="tel" placeholder="Telefon (pentru Te sunăm)"><input id="cf-n" placeholder="Nume și firmă"><input id="cf-l" placeholder="Localitate"></div>'
     + '<div class="nav"><span><button class="btn" data-act="home">⌂ Home</button><button class="btn" data-act="back">← Modifică</button></span><span id="send">'
-    + (t.link ? '<a class="btn" target="_blank" href="/cumpara/' + t.link(st.A) + '">Vezi utilajul</a>' : "")
+    + (lnk ? '<a class="btn" target="_blank" href="/cumpara/' + lnk + '">Vezi utilajul</a>' : "")
     + '<a class="btn wa" data-send="wa" target="_blank" rel="noopener">WhatsApp</a><a class="btn go" data-send="call" href="#">Te sunăm noi</a><a class="btn" data-send="mail" title="' + MAIL + '">Email</a></span></div>';
 }
 function render() {
@@ -464,6 +484,7 @@ function onClick(e) {
     var s = steps()[st.i];
     if (s.multi) { var a = st.A[s.k] ? st.A[s.k].split("; ") : [], j = a.indexOf(d.v); j > -1 ? a.splice(j, 1) : a.push(d.v); st.A[s.k] = a.join("; "); b.classList.toggle("sel"); return; }
     st.A[s.k] = d.v;
+    if (s.img && s.img[d.v]) setGroup(s.img[d.v]);
     if (s.k === "mat") { delete st.A.gros; delete st.A.kw; }
     if (s.k === "gros") delete st.A.kw;
     st.i++; return render();
