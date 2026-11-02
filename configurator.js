@@ -16,7 +16,7 @@ var WA = "40730466920", MAIL = "contact@militarylasertech.com";
 
 /* ================= DATE ================= */
 var FRAMES = {sheet_open:7, sheet_enclosed:6, sheet_exchange_open:6, sheet_exchange_enclosed:6, platetube:6, platetube_exchange:6,
-  tube_2:5, tube_3:5, hbeam:7, cabinet:5, brake:7, robot:2, gen_ind:6, gen_mob:2, gen_home:5, forklift:6, forklift_d:1, forklift_gpl:1, forklift_e3:1, forklift_e4:1, forklift_hd:1, forklift_hdx:2, forklift_st:1, solar:1, ups:1, start:1};
+  tube_2:5, tube_3:5, hbeam:7, cabinet:5, brake:7, robot:3, gen_ind:6, gen_mob:2, gen_home:5, forklift:6, forklift_d:1, forklift_gpl:1, forklift_e3:1, forklift_e4:1, forklift_hd:1, forklift_hdx:2, forklift_st:1, solar:1, ups:1, start:1};
 var MESE = ["3000 x 1500 mm","4000 x 2000 mm","6000 x 2000 mm","6000 x 2500 mm"];
 var COD = {"3000 x 1500 mm":"31.5","4000 x 2000 mm":"42","6000 x 2000 mm":"62","6000 x 2500 mm":"62.5"};
 var MAT = ["Oțel carbon","Inox","Aluminiu","Alamă / cupru"];
@@ -160,7 +160,7 @@ var T = [
    step("gros","Grosimea maximă a tablei",{o:["până la 3 mm","3 - 6 mm","6 - 10 mm","peste 10 mm"]}),
    step("opt","Opțiuni",{multi:1, o:["Set matrițe și poansoane suplimentare","Brațe suport față","Protecție laser la poanson",
     "Stabilizator de tensiune + protecție la suprasarcină","Instalare + training la sediu"]})],
-  model:function (A) { return "bendIT dbE it " + (!A.lung ? "…" : /^Altă/.test(A.lung) ? "(la cerere)" : A.lung.replace(/ m \/ /, "-").replace(" t", "")); },
+  model:function (A) { return "bendIT " + (!A.lung ? "…" : /^Altă/.test(A.lung) ? "(la cerere)" : A.lung.replace(/ m \/ /, "-").replace(" t", "")); },
   link:function () { return "abkant-393"; }},
  {id:"hbeam", n:"Debitare heavy / H-beam 3D", d:"Grinzi H, profile mari, 7 axe. La cerere", g:"hbeam",
   variants:[v("h7","3D 7 axe","Teșire și tăiere 3D pe grinzi H, U, I","hbeam",{specs:{"Viteză tăiere":"80 m/min","Precizie poziționare":"±0.15 mm","Grosime":"0–50 mm"}})],
