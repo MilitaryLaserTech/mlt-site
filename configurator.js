@@ -541,6 +541,9 @@ function init() {
     + '<div class="vname" id="vName"></div><div class="vcode" id="vCode"></div><div class="thumbs" id="thumbs"></div></section>'
     + '<section class="panel" id="panel"></section></div></div></div>';
   root.addEventListener("click", onClick);
+  // link direct pe o categorie: .../configurator-utilaj?tip=sheet (din butonul de pe pagina produsului)
+  var q = /[?#&]tip=([a-z]+)/.exec(location.search + location.hash);
+  if (q) for (var k = 0; k < T.length; k++) if (T[k].id === q[1]) { st.tip = T[k].id; setGroup(T[k].g); break; }
   drag(); render();
 }
 init(); document.addEventListener("DOMContentLoaded", init); window.addEventListener("load", init);
