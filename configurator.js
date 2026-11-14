@@ -16,7 +16,7 @@ var WA = "40730466920", MAIL = "contact@militarylasertech.com";
 
 /* ================= DATE ================= */
 var FRAMES = {sheet_open:7, sheet_enclosed:6, sheet_exchange_open:6, sheet_exchange_enclosed:6, platetube:6, platetube_exchange:6,
-  tube_2:5, tube_3:5, hbeam:7, cabinet:5, brake:7, robot:3, gen_ind:6, gen_mob:2, gen_home:5, forklift:6, forklift_d:1, forklift_gpl:1, forklift_e3:1, forklift_e4:1, forklift_hd:1, forklift_hdx:2, forklift_st:1, solar:1, ups:1, start:1};
+  tube_2:5, tube_3:5, hbeam:7, cabinet:5, brake:7, robot:3, gen_ind:6, gen_mob:2, gen_home:5, forklift:6, forklift_d:1, forklift_gpl:1, forklift_e3:1, forklift_e4:1, forklift_hd:1, forklift_hdx:2, forklift_st:1, solar:1, ups:1, start:1, comp_p:1, comp_s:1};
 var MESE = ["3000 x 1500 mm","4000 x 2000 mm","6000 x 2000 mm","6000 x 2500 mm"];
 var COD = {"3000 x 1500 mm":"31.5","4000 x 2000 mm":"42","6000 x 2000 mm":"62","6000 x 2500 mm":"62.5"};
 var MAT = ["Oțel carbon","Inox","Aluminiu","Alamă / cupru"];
@@ -29,9 +29,9 @@ var KW = ["1 kW","1,5 kW","2 kW","3 kW","4 kW","6 kW","8 kW","12 kW","15 kW","20
 var NUSTIU = "Nu știu - recomandați-mi";
 var CE = "CE (MD + LVD + EMC)";
 
-var EXTRA_LASER = ["Compresor de aer","Stabilizator de tensiune + protecție la suprasarcină","Transformator",
+var EXTRA_LASER = ["Stabilizator de tensiune + protecție la suprasarcină","Transformator",
   "Aer condiționat pentru dulapul electric","Software nesting profesional","Instalare + training la sediu"];
-var EXTRA_WELD = ["Alimentator sârmă (dublu)","Kit protecție laser (ochelari + ecran)","Compresor de aer",
+var EXTRA_WELD = ["Alimentator sârmă (dublu)","Kit protecție laser (ochelari + ecran)",
   "Stabilizator de tensiune + protecție la suprasarcină","Training operator"];
 
 function v(id, t, d, g, o) { o = o || {}; o.id = id; o.t = t; o.d = d; o.g = g; return o; }
@@ -56,6 +56,23 @@ var GEN = {22:[20,4.8,2.6,92,"2000 x 900 x 1310",750], 25:[24.5,6.1,3.2,82,"1950
   1120:[1018,205,105.7,2000,"4950 x 2000 x 3425",8250], 1250:[1136.3,198.4,100.3,2000,"5450 x 2400 x 3470",9035], 1400:[1250,217.6,108.9,2000,"5450 x 2400 x 3470",9120],
   1650:[1500,324,156,2275,"5450 x 2400 x 3470",11760], 1700:[1545.5,327.5,166.7,2275,"5450 x 2400 x 3470",11760], 2000:[1830,401,194.7,3000,"8000 x 2800 x 3150",18700],
   2500:[2250,466.4,240.5,0,"",0]};
+// compresoare de aer (fisele tehnice ale furnizorului): denumire MLT -> descriere
+var AIR_P = ["MLT AIR P100 – piston 100 L, 2,2 kW, 220 V, 10 bar, 320 L/min",
+  "MLT AIR P200 – piston 200 L, 2,2 kW, 220 V, 10 bar, 320 L/min",
+  "MLT AIR P500 HP – piston 500 L, 5,5 CP, 380 V, 12,5 bar, 593 L/min",
+  "MLT AIR P500 – piston 500 L, 7,5 kW, 380 V, 10 bar, 1.000 L/min"];
+var AIR_S = ["MLT AIR S7.5 – șurub 7,5 kW, 10 bar, fără butelie, 950–1.200 L/min",
+  "MLT AIR S7.5/270 – șurub 7,5 kW, 10 bar, butelie 270 L + purjare automată condens",
+  "MLT AIR S7.5/300 – șurub 7,5 kW, 10 bar, butelie 300 L",
+  "MLT AIR S7.5/500 – șurub 7,5 kW, 10 bar, butelie 500 L + purjare automată condens"];
+var AIR_NONE = "Fără compresor (am deja)";
+function airName(x) { return (x || "").split(" – ")[0]; }
+// la utilaje: compresorul e un extra optional, cu modelul potrivit utilajului recomandat
+function airStep(o, rec) { return step("comp", "Compresor de aer (opțional)", {o: [AIR_NONE].concat(o), rec: rec}); }
+var AIR_FOR = {
+  laser: airStep([AIR_S[2], AIR_S[3], AIR_S[1], "Compresor 16 bar pentru tăiere cu aer – la cerere"], function () { return AIR_S[2]; }),
+  plasma: airStep([AIR_P[1], AIR_P[3], AIR_S[2]], function (A) { return /^200/.test(A.amp || "") ? AIR_P[3] : AIR_P[1]; }),
+  weld: airStep([AIR_P[0], AIR_P[1]], function () { return AIR_P[0]; })};
 var UPS_KVA = [10,15,20,30,40,45,60,80,100,120,160,200,250];
 function isGenInd(A) { return A.variant === "ind"; }
 function isMob(A) { return /remorcă/.test(A.exec || ""); }
@@ -120,7 +137,7 @@ var T = [
    step("amp","Sursa plasmă",{o:["63 A","100 A","120 A","200 A",NUSTIU], rec:function (A) {
      var g = A.gros || ""; return /^până/.test(g) ? "100 A" : /^10/.test(g) ? "120 A" : g ? "200 A" : null; }}),
    step("opt","Opțiuni",{multi:1, o:["Exhaustare 2 kW și filtrare fum","Masă cu apă pentru fum și zgură","Componente Honeywell / EMERSON / FUJI",
-    "Compresor de aer","Stabilizator de tensiune + protecție la suprasarcină","Software nesting profesional","Instalare + training la sediu"]})],
+    "Stabilizator de tensiune + protecție la suprasarcină","Software nesting profesional","Instalare + training la sediu"]})],
   model:function (A) { return (A.variant === "plt" ? "thermoTHANK CANON MLT " : "thermoTANK MLT ") + (COD[A.masa] || ""); },
   link:function (A) { return A.variant === "plt" ? "thermothank-canon-plasma-tabla-profile-392" : "thermotank-plasma-mlt-391"; }},
  {id:"weld", n:"Sudură / curățare laser", d:"4 în 1, sudură laser, curățare pulsată sau continuă", g:"cabinet",
@@ -148,7 +165,7 @@ var T = [
    v("c","Robot tăiere laser 3D","Piese 3D, ambutisate, forme neregulate, tăiere 360°","robot")],
   steps:[step("mat","Ce material lucrezi?",{multi:1, o:["Oțel carbon","Inox","Aluminiu"]}), W_TH, W_KW,
    step("opt","Opțiuni",{multi:1, o:["Urmărire cusătură fără contact","Coordonare mai multe stații","Alimentare automată sârmă",
-    "Poziționer rotativ pentru piese","Celulă de protecție cu senzori","Compresor de aer","Stabilizator de tensiune + protecție la suprasarcină","Programare + training la sediu"]})],
+    "Poziționer rotativ pentru piese","Celulă de protecție cu senzori","Stabilizator de tensiune + protecție la suprasarcină","Programare + training la sediu"]})],
   std:"Braț 6 axe pe portal · Rază braț 1.4–2.0 m · Precizie repetabilă ±0.1 mm · Programare offline din model 3D",
   model:function () { return "MLT Laser Welding Robot 6 axe"; },
   link:function () { return "mlt-laser-welding-robot-automatic-6-axis-387"; }},
@@ -253,8 +270,28 @@ var T = [
     "Cuplare cu generator / fotovoltaic","Instalare + punere în funcțiune"]})],
   std:"UPS online cu dublă conversie · Display LCD · Protecție la suprasarcină și scurtcircuit · Bypass automat",
   ce:"CE",
-  model:function (A) { return "MLT UPS " + (A.variant === "t1" ? "3/1 " : "3/3 ") + (parseFloat(A.kva || "") ? parseFloat(A.kva) + " kVA" : "(la cerere)"); }}
+  model:function (A) { return "MLT UPS " + (A.variant === "t1" ? "3/1 " : "3/3 ") + (parseFloat(A.kva || "") ? parseFloat(A.kva) + " kVA" : "(la cerere)"); }},
+ {id:"comp", n:"Compresor de aer", d:"Cu piston sau cu șurub, 100–500 L, 10–12,5 bar", g:"comp_s",
+  variants:[
+   v("p","Cu piston","Atelier, scule pneumatice, sudură / curățare laser, plasmă","comp_p",{
+     specs:{"Presiune maximă":"10 bar (12,5 bar la P500 HP)","Transmisie":"Cu curea, motor cu bobinaj de cupru","Protecție":"Supapă de siguranță, protecție la suprapresiune"}}),
+   v("s","Cu șurub","Funcționare continuă: laser, linii de producție, consum mare de aer","comp_s",{tag:"TOP",
+     specs:{"Presiune maximă":"10 bar","Debit":"1,2 m³/min la 7 bar · 0,95 m³/min la 10 bar","Ulei":"Lubrifiere, etanșare și răcire","Protecții":"Presiune, temperatură, suprasarcină, siguranță electrică"}})],
+  steps:[step("apl","Pentru ce folosești aerul comprimat?",{multi:1, o:["Scule pneumatice / atelier","Vopsitorie","Tăiere laser (aer de asistență)","Tăiere plasmă","Sudură / curățare laser","Linie de producție"]}),
+   step("mdl","Modelul",{only:"p", o:AIR_P, rec:function (A) { var a = A.apl || "";
+     return /Linie|Vopsit/.test(a) ? AIR_P[3] : /plasmă/.test(a) ? AIR_P[1] : AIR_P[0]; }}),
+   step("mdl","Modelul",{only:"s", o:AIR_S, rec:function () { return AIR_S[2]; }}),
+   step("opt","Opțiuni",{multi:1, o:["Uscător de aer 1,6 m³/min","Uscător de aer 2,6 m³/min","Filtre de linie (apă / ulei)","Butelie suplimentară 500 L",
+    "Rețea de aer comprimat (instalare)","Stabilizator de tensiune + protecție la suprasarcină"]})],
+  model:function (A) { return A.mdl ? airName(A.mdl) : A.variant === "s" ? "MLT AIR S" : "MLT AIR P"; }}
 ];
+// pasul optional "Compresor de aer" la utilaje, pus inaintea optiunilor
+T.forEach(function (t) {
+  var c = {sheet:"laser", tube:"laser", platetube:"laser", hbeam:"laser", plasma:"plasma", weld:"weld", robot:"weld"}[t.id];
+  if (!c) return;
+  var i = t.steps.map(function (x) { return x.k; }).lastIndexOf("opt");
+  t.steps.splice(i < 0 ? t.steps.length : i, 0, AIR_FOR[c]);
+});
 // abkant: forta (t), lungime (mm), motor (kW), greutate (kg) - din fisa tehnica
 var BRAKES = [[50,1600,5.5,4000],[70,2500,7.9,6500],[100,3200,7.9,9300],[100,4100,7.9,11000],[160,4100,11,13800],
   [200,4100,15,14800],[200,6100,15,20500],[250,4100,18.5,15000],[400,4100,45,32600],[500,6100,63,51000]];
@@ -427,10 +464,10 @@ function panel() {
   }
   if (st.i < ss.length) {
     var s = ss[st.i], o = options(s), r = recFor(s), cur = (st.A[s.k] || "").split("; "), chips = o.every(function (x) { return x.length < 16; });
-    var sub = s.multi ? "Poți alege mai multe." : r ? 'Recomandat: <b class="ok">' + r + "</b> (orientativ, din tabelul nostru kW/mm)." : "";
+    var sub = s.multi ? "Poți alege mai multe." : r ? 'Recomandat: <b class="ok">' + (/^MLT AIR/.test(r) ? airName(r) : r) + "</b> (orientativ" + (s.laserKw ? ", din tabelul nostru kW/mm" : "") + ")." : "";
     if (s.laserTh && t.rover && !armored()) sub = "Varianta deschisă merge până la 6 kW. Pentru grosimi mai mari alege varianta protejată (ARMORED).";
     p.innerHTML = head(s.t, sub) + '<div class="opts' + (chips && !s.multi ? " chips" : "") + '">'
-      + o.map(function (x) { return card("v", x, cur.indexOf(x) > -1, '<span class="t">' + x + "</span>" + (r && x === r ? '<span class="rec">✔ recomandat</span>' : ""), s.multi ? "multi" : ""); }).join("")
+      + o.map(function (x) { return card("v", x, cur.indexOf(x) > -1, (/^MLT AIR/.test(x) ? '<span class="t">' + airName(x) + '</span><span class="d">' + x.split(" – ")[1] + "</span>" : '<span class="t">' + x + "</span>") + (r && x === r ? '<span class="rec">✔ recomandat</span>' : ""), s.multi ? "multi" : ""); }).join("")
       + "</div>" + nav(!!s.multi, s.k === "opt" ? "Vezi configurația" : "Continuă");
     return;
   }
