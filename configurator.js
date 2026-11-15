@@ -283,7 +283,8 @@ var T = [
    step("mdl","Modelul",{only:"s", o:AIR_S, rec:function () { return AIR_S[2]; }}),
    step("opt","Opțiuni",{multi:1, o:["Uscător de aer 1,6 m³/min","Uscător de aer 2,6 m³/min","Filtre de linie (apă / ulei)","Butelie suplimentară 500 L",
     "Rețea de aer comprimat (instalare)","Stabilizator de tensiune + protecție la suprasarcină"]})],
-  model:function (A) { return A.mdl ? airName(A.mdl) : A.variant === "s" ? "MLT AIR S" : "MLT AIR P"; }}
+  model:function (A) { return A.mdl ? airName(A.mdl) : A.variant === "s" ? "MLT AIR S" : "MLT AIR P"; },
+  link:function () { return "compresoare-de-aer-399"; }}
 ];
 // pasul optional "Compresor de aer" la utilaje, pus inaintea optiunilor
 T.forEach(function (t) {
